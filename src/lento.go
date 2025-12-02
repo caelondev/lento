@@ -7,6 +7,8 @@ import (
 
 	errorhandler "github.com/caelondev/lento/src/error-handler"
 	"github.com/caelondev/lento/src/lexer"
+	"github.com/caelondev/lento/src/parser"
+	"github.com/sanity-io/litter"
 )
 
 var ErrorHandler = errorhandler.New()
@@ -52,7 +54,6 @@ func runRepl() {
 	}
 }
 
-
 func run(sourceCode string) {
 	lexer := lexer.NewLexer(sourceCode, ErrorHandler)
 	tokens := lexer.Tokenize()
@@ -60,7 +61,14 @@ func run(sourceCode string) {
 		return
 	}
 
+	ast := parser.ProduceAST(tokens, ErrorHandler)
+	if ErrorHandler.HadError {
+		return
+	}
+
 	for _, token := range tokens {
 		token.String()
 	}
+
+	litter.Dump(ast)
 }

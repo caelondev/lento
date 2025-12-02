@@ -66,6 +66,10 @@ func (l *Lexer) AnalyzeTokens() {
 		l.addToken(DOT)
 	case ',':
 		l.addToken(COMMA)
+	case ';':
+		l.addToken(SEMICOLON)
+	case ':':
+		l.addToken(COLON)
 	case '*':
 		l.handleCompound(STAR, STAR_EQUALS)
 	case '%':
