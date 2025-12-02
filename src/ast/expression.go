@@ -54,3 +54,14 @@ func (node *UnaryExpression) Expression() {}
 func (node *UnaryExpression) GetLine() uint {
 	return node.Line
 }
+
+type AssignmentExpression struct {
+	Assignee Expression
+	Value Expression
+	Line uint
+}
+
+func (node *AssignmentExpression) Expression() {}
+func (node *AssignmentExpression) GetLine() uint {
+	return node.Line
+}

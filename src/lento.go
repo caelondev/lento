@@ -9,10 +9,10 @@ import (
 	"github.com/caelondev/lento/src/lexer"
 	"github.com/caelondev/lento/src/parser"
 	"github.com/caelondev/lento/src/runtime"
-	"github.com/sanity-io/litter"
 )
 
 var ErrorHandler = errorhandler.New()
+var Environment = runtime.NewEnvironment(nil, ErrorHandler)
 
 func Lento() {
 	if len(os.Args) > 2 {
@@ -50,38 +50,39 @@ func runRepl() {
 		}
 		line := scanner.Text()
 
-		run(line)
+		result := run(line)
+		fmt.Printf("%v\n\n", result)
 		ErrorHandler.HadError = false
 	}
 }
 
-func run(sourceCode string) {
+func run(sourceCode string) runtime.RuntimeValue {
 	lexer := lexer.NewLexer(sourceCode, ErrorHandler)
-	interpreter := runtime.NewInterpreter(ErrorHandler)
+	interpreter := runtime.NewInterpreter(ErrorHandler, Environment)
 
 	tokens := lexer.Tokenize()
 	if ErrorHandler.HadError {
-		return
+		return nil
 	}
 
 	ast := parser.ProduceAST(tokens, ErrorHandler)
 	if ErrorHandler.HadError {
-		return
+		return nil
 	}
 
-	for _, token := range tokens {
-		token.String()
-	}
+	// for _, token := range tokens {
+	// 	token.String()
+	// }
 
-	litter.Dump(ast)
-	
+	// litter.Dump(ast)
+
 	var result runtime.RuntimeValue
 	for _, statement := range ast.Body {
 		result = interpreter.EvaluateStatement(statement)
 		if ErrorHandler.HadError {
-			return
+			return nil
 		}
 	}
 
-	litter.Dump(result)
+	return result
 }

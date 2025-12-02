@@ -92,7 +92,7 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 }
 
 func parseBinaryExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	operatorToken := p.advance() // Eat 
+	operatorToken := p.advance() // Eat ---
 	right := parseExpression(p, DEFAULT_BP)
 
 	return &ast.BinaryExpression{
@@ -110,5 +110,24 @@ func parseUnaryExpression(p *parser) ast.Expression {
 		Operator: operatorToken,
 		Operand: value,
 		Line: p.line,
+	}
+}
+
+func parseAssignmentExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
+	if _, ok := left.(*ast.SymbolExpression); !ok {
+		p.errorHandler.Report(int(p.line), "Invalid left-hand assignment")
+
+		p.advance()
+		parseExpression(p, DEFAULT_BP)
+
+		return left
+	}
+
+	p.advance()
+	value := parseExpression(p, ASSIGNMENT-1)
+
+	return &ast.AssignmentExpression{
+		Assignee: left,
+		Value:    value,
 	}
 }

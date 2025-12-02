@@ -12,8 +12,13 @@ func (i *Interpreter) evaluateNumberExpression(expr *ast.NumberExpression) Runti
 	return &NumberValue{Value: expr.Value}
 }
 
+func (i *Interpreter) evaluateSymbolExpression(expr *ast.SymbolExpression) RuntimeValue {
+	env := i.GetEnvironment()
+	return env.LookupVariable(expr.Line, expr.Value)
+}
+
 func (i *Interpreter) evaluateStringExpression(expr *ast.StringExpression) RuntimeValue {
-	value := expr.Value[1 : len(expr.Value) - 1] // Trim "
+	value := expr.Value[1 : len(expr.Value)-1] // Trim " ---
 	return &StringValue{Value: value}
 }
 
@@ -55,7 +60,6 @@ func (i *Interpreter) evaluateBinaryExpression(expr *ast.BinaryExpression) Runti
 	case lexer.OR:
 		return BOOLEAN(isTruthy(left) || isTruthy(right))
 	default:
-
 
 		leftNum, leftIsNum := left.(*NumberValue)
 		rightNum, rightIsNum := right.(*NumberValue)
@@ -139,3 +143,18 @@ func (i *Interpreter) evaluateNumericBinaryExpression(left *NumberValue, right *
 	return &NumberValue{Value: result}
 }
 
+func (i *Interpreter) evaluateAssignmentExpression(expr *ast.AssignmentExpression) RuntimeValue {
+	symbol, ok := expr.Assignee.(*ast.SymbolExpression)
+	if !ok {
+		i.errorHandler.Report(int(i.line), "Invalid left-hand assignment")
+
+		return NIL()
+	}
+
+	value := i.EvaluateExpression(expr.Value)
+
+	env := i.GetEnvironment()
+	env.AssignVariable(i.line, symbol.Value, value)
+
+	return value
+}

@@ -19,3 +19,15 @@ func (node *ExpressionStatement) Statement() {}
 func (node *ExpressionStatement) GetLine() uint {
 	return node.Line
 }
+
+type VariableDeclarationStatement struct {
+	IsConstant bool
+	Identifier string
+	Value Expression
+	Line       uint
+}
+
+func (node *VariableDeclarationStatement) Statement() {}
+func (node *VariableDeclarationStatement) GetLine() uint {
+	return node.Line
+}
