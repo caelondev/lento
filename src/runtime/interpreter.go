@@ -20,6 +20,9 @@ func NewInterpreter(errorHandler *errorhandler.ErrorHandler) *Interpreter {
 }
 
 func (i *Interpreter) EvaluateStatement(node ast.Statement) RuntimeValue {
+	// Update line before processing
+	i.line = uint(node.GetLine())
+
 	switch n := node.(type) {
 	case *ast.BlockStatement:
 		return i.evaluateBlockStatement(n)
@@ -28,18 +31,24 @@ func (i *Interpreter) EvaluateStatement(node ast.Statement) RuntimeValue {
 
 	default:
 		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unrecognized AST Statement whilst evaluating: %T\n", node))
-
 	}
 
 	return nil
 }
 
 func (i *Interpreter) EvaluateExpression(node ast.Expression) RuntimeValue {
+	// Update line before processing
+	i.line = uint(node.GetLine())
+
 	switch n := node.(type) {
 	case *ast.NumberExpression:
 		return i.evaluateNumberExpression(n)
+	case *ast.StringExpression:
+		return i.evaluateStringExpression(n)
 	case *ast.BinaryExpression:
 		return i.evaluateBinaryExpression(n)
+	case *ast.UnaryExpression:
+		return i.evaluateUnaryExpression(n)
 
 	default:
 		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unrecognized AST Expression whilst evaluating: %T\n", node))

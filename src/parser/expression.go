@@ -63,14 +63,17 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 
 		return &ast.NumberExpression{
 			Value: number,
+			Line: p.line,
 		}
 	case lexer.STRING:
 		return &ast.StringExpression{
 			Value: p.advance().Lexeme,
+			Line: p.line,
 		}
 	case lexer.IDENTIFIER:
 		return &ast.SymbolExpression{
 			Value: p.advance().Lexeme,
+			Line: p.line,
 		}
 	case lexer.LEFT_PARENTHESIS:
 		p.advance() // Eat '(' ---
@@ -96,5 +99,16 @@ func parseBinaryExpression(p *parser, left ast.Expression, bp BindingPower) ast.
 		Left: left,
 		Right: right,
 		Operator: operatorToken,
+		Line: p.line,
+	}
+}
+
+func parseUnaryExpression(p *parser) ast.Expression {
+	operatorToken := p.advance()
+	value := parseExpression(p, UNARY)
+	return &ast.UnaryExpression{	
+		Operator: operatorToken,
+		Operand: value,
+		Line: p.line,
 	}
 }

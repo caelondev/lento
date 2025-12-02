@@ -27,6 +27,7 @@ func ProduceAST(tokens []*lexer.Token, errorHandler *errorhandler.ErrorHandler) 
 
 	return ast.BlockStatement{
 		Body: body,
+		Line:  parser.line,
 	}
 }
 
@@ -97,3 +98,4 @@ func (p *parser) advance() *lexer.Token {
 	p.position++
 	return token
 }
+

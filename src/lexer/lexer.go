@@ -68,6 +68,14 @@ func (l *Lexer) AnalyzeTokens() {
 		l.addToken(COMMA)
 	case ';':
 		l.addToken(SEMICOLON)
+	case '!':
+		l.handleCompound(BANG, NOT_EQUAL)
+	case '=':
+		l.handleCompound(ASSIGNMENT, EQUAL)
+	case '<':
+		l.handleCompound(LESS, LESS_EQUAL)
+	case '>':
+		l.handleCompound(GREATER, GREATER_EQUAL)
 	case ':':
 		l.addToken(COLON)
 	case '*':

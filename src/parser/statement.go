@@ -22,5 +22,6 @@ func parseStatement(p *parser) ast.Statement {
 
 	return &ast.ExpressionStatement{
 		Expression: expression,
+		Line: p.line,
 	}
 }

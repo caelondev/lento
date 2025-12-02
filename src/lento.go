@@ -69,11 +69,11 @@ func run(sourceCode string) {
 		return
 	}
 
-	// for _, token := range tokens {
-	// 	token.String()
-	// }
-	//
-	// litter.Dump(ast)
+	for _, token := range tokens {
+		token.String()
+	}
+
+	litter.Dump(ast)
 	
 	var result runtime.RuntimeValue
 	for _, statement := range ast.Body {

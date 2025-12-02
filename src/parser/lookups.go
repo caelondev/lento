@@ -65,4 +65,17 @@ func createTokenLookups() {
 	led(lexer.SLASH, MULTIPLICATIVE, parseBinaryExpression)
 	led(lexer.MODULO, MULTIPLICATIVE, parseBinaryExpression)
 	led(lexer.STAR, MULTIPLICATIVE, parseBinaryExpression)
+
+	// UNARY OPERATORS ---
+	nud(lexer.NOT, parseUnaryExpression)
+	nud(lexer.MINUS, parseUnaryExpression)
+	nud(lexer.PLUS, parseUnaryExpression)
+
+	// COMPARISON OPERATORS --+
+	led(lexer.GREATER, RELATIONAL, parseBinaryExpression)
+	led(lexer.GREATER_EQUAL, RELATIONAL, parseBinaryExpression)
+	led(lexer.LESS, RELATIONAL, parseBinaryExpression)
+	led(lexer.LESS_EQUAL, RELATIONAL, parseBinaryExpression)
+	led(lexer.EQUAL, RELATIONAL, parseBinaryExpression)
+	led(lexer.NOT_EQUAL, RELATIONAL, parseBinaryExpression)
 }

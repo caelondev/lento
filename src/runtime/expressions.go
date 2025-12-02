@@ -12,19 +12,89 @@ func (i *Interpreter) evaluateNumberExpression(expr *ast.NumberExpression) Runti
 	return &NumberValue{Value: expr.Value}
 }
 
+func (i *Interpreter) evaluateStringExpression(expr *ast.StringExpression) RuntimeValue {
+	value := expr.Value[1 : len(expr.Value) - 1] // Trim "
+	return &StringValue{Value: value}
+}
+
+func (i *Interpreter) evaluateUnaryExpression(expr *ast.UnaryExpression) RuntimeValue {
+	operand := i.EvaluateExpression(expr.Operand)
+	operator := expr.Operator.TokenType
+
+	switch operator {
+	case lexer.PLUS:
+		if num, ok := operand.(*NumberValue); ok {
+			return &NumberValue{Value: +num.Value}
+		}
+		i.errorHandler.Report(int(i.line), "Unary '+' operator requires a number")
+	case lexer.MINUS:
+		if num, ok := operand.(*NumberValue); ok {
+			return &NumberValue{Value: -num.Value}
+		}
+		i.errorHandler.Report(int(i.line), "Unary '-' operator requires a number")
+	case lexer.NOT:
+		if b, ok := operand.(*BooleanValue); ok {
+			return BOOLEAN(!isTruthy(b))
+		}
+
+	default:
+		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unrecognized unary operator: %s", expr.Operator.Lexeme))
+	}
+
+	return NIL()
+}
+
 func (i *Interpreter) evaluateBinaryExpression(expr *ast.BinaryExpression) RuntimeValue {
+	operatorToken := expr.Operator
 	left := i.EvaluateExpression(expr.Left)
 	right := i.EvaluateExpression(expr.Right)
 
-	leftNum, leftIsNum := left.(*NumberValue)
-	rightNum, rightIsNum := right.(*NumberValue)
+	switch operatorToken.TokenType {
+	case lexer.AND:
+		return BOOLEAN(isTruthy(left) && isTruthy(right))
+	case lexer.OR:
+		return BOOLEAN(isTruthy(left) || isTruthy(right))
+	default:
 
-	if leftIsNum && rightIsNum {
-		return i.evaluateNumericBinaryExpression(leftNum, rightNum, expr.Operator)
+
+		leftNum, leftIsNum := left.(*NumberValue)
+		rightNum, rightIsNum := right.(*NumberValue)
+
+		if leftIsNum && rightIsNum {
+			return i.evaluateNumericBinaryExpression(leftNum, rightNum, operatorToken)
+		}
+
+		leftStr, leftIsStr := left.(*StringValue)
+		rightStr, rightIsStr := right.(*StringValue)
+
+		if leftIsStr && rightIsStr {
+			return i.evaluateStringBinaryExpression(leftStr, rightStr, operatorToken)
+		}
+
+		i.errorHandler.Report(int(i.line), fmt.Sprintf("Cannot perform '%s' binary operator with unsupported type (%s to %s)", operatorToken.Lexeme, left.Type(), right.Type()))
+	}
+	return NIL()
+}
+
+func (i *Interpreter) evaluateStringBinaryExpression(left *StringValue, right *StringValue, operator *lexer.Token) RuntimeValue {
+	var value string
+
+	lhs := left.Value
+	rhs := right.Value
+
+	switch operator.TokenType {
+	case lexer.PLUS:
+		value = lhs + rhs
+	case lexer.EQUAL:
+		return BOOLEAN(lhs == rhs)
+	case lexer.NOT_EQUAL:
+		return BOOLEAN(lhs != rhs)
+
+	default:
+		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unsupported string binary operator: '%s'", operator.Lexeme))
 	}
 
-	i.errorHandler.Report(int(i.line), fmt.Sprintf("Cannot perform %s binary operator with unsupported type (%s to %s)", expr.Operator.Lexeme, left.Type(), right.Type()))
-	return NIL()
+	return &StringValue{Value: value}
 }
 
 func (i *Interpreter) evaluateNumericBinaryExpression(left *NumberValue, right *NumberValue, operator *lexer.Token) RuntimeValue {
@@ -61,8 +131,9 @@ func (i *Interpreter) evaluateNumericBinaryExpression(left *NumberValue, right *
 		return BOOLEAN(lhs == rhs)
 	case lexer.NOT_EQUAL:
 		return BOOLEAN(lhs != rhs)
+
 	default:
-		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unsupported binary operator: '%s'", operator.Lexeme))
+		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unsupported numeric binary operator: '%s'", operator.Lexeme))
 	}
 
 	return &NumberValue{Value: result}
