@@ -1,6 +1,7 @@
 package src
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -18,8 +19,10 @@ func Lento() {
 
 	if len(os.Args) == 2 {
 		runFile(os.Args[1])
+	} else {
+		runRepl()
 	}
-	
+
 }
 
 func runFile(filepath string) {
@@ -29,13 +32,35 @@ func runFile(filepath string) {
 	}
 
 	run(string(bytes))
+
+	if ErrorHandler.HadError {
+		os.Exit(ErrorHandler.ErrorCode)
+	}
 }
+
+func runRepl() {
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Print(">> ")
+		if !scanner.Scan() {
+			break
+		}
+		line := scanner.Text()
+
+		run(line)
+		ErrorHandler.HadError = false
+	}
+}
+
 
 func run(sourceCode string) {
 	lexer := lexer.NewLexer(sourceCode, ErrorHandler)
 	tokens := lexer.Tokenize()
+	if ErrorHandler.HadError {
+		return
+	}
 
-	for _, t := range tokens {
-		t.String()
+	for _, token := range tokens {
+		token.String()
 	}
 }

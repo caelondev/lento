@@ -99,6 +99,7 @@ func (l *Lexer) AnalyzeTokens() {
 				int(l.Line),
 				65,
 			)
+			return
 		}
 	}
 }
@@ -253,14 +254,17 @@ func (l *Lexer) advance() rune {
 }
 
 func (l *Lexer) peek() rune {
-	return l.SourceCode[l.Current]
+    if l.Current >= len(l.SourceCode) {
+        return 0
+    }
+    return l.SourceCode[l.Current]
 }
 
 func (l *Lexer) peekNext() rune {
-	if l.Current+1 >= len(l.SourceCode) {
-		return 0
-	}
-	return l.SourceCode[l.Current+1]
+    if l.Current+1 >= len(l.SourceCode) {
+        return 0
+    }
+    return l.SourceCode[l.Current+1]
 }
 
 func (l *Lexer) match(expected rune) bool {
