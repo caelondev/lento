@@ -2,12 +2,13 @@ package runtime
 
 import (
 	"fmt"
-	"slices"
 	errorhandler "github.com/caelondev/lento/src/error-handler"
+	"slices"
 )
 
 type Environment interface {
 	DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool) RuntimeValue
+	DeclareFunction(line uint, functionName string, value RuntimeValue, isNative bool) RuntimeValue
 	AssignVariable(line uint, variableName string, value RuntimeValue) RuntimeValue
 	LookupVariable(line uint, variableName string) RuntimeValue
 	ResolveVariable(line uint, variableName string) Environment
@@ -17,6 +18,7 @@ type Environment interface {
 type EnvironmentStruct struct {
 	parent       Environment
 	variables    map[string]RuntimeValue
+	functions    map[string]RuntimeValue // Separate function namespace
 	constants    []string
 	natives      []string
 	errorHandler *errorhandler.ErrorHandler
@@ -26,6 +28,7 @@ func NewEnvironment(parent Environment, errorHandler *errorhandler.ErrorHandler)
 	env := &EnvironmentStruct{
 		parent:       parent,
 		variables:    make(map[string]RuntimeValue),
+		functions:    make(map[string]RuntimeValue),
 		constants:    make([]string, 0),
 		natives:      make([]string, 0),
 		errorHandler: errorHandler,
@@ -46,10 +49,37 @@ func DeclareGlobalVariables(env Environment) {
 	env.DeclareVariable(0, "false", BOOLEAN(false), isConstant, isNative)
 }
 
-func (e *EnvironmentStruct) DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool) RuntimeValue {
-	_, exists := e.variables[variableName]
+func (e *EnvironmentStruct) DeclareFunction(line uint, functionName string, value RuntimeValue, isNative bool) RuntimeValue {
+	// Check if already exists in EITHER namespace
+	_, existsInFunctions := e.functions[functionName]
+	_, existsInVariables := e.variables[functionName]
 
-	if exists {
+	if existsInFunctions || existsInVariables {
+		e.errorHandler.Report(
+			int(line),
+			fmt.Sprintf("Cannot declare function '%s' as it already exists", functionName),
+		)
+		return NIL()
+	}
+
+	// Functions are always constants
+	e.constants = append(e.constants, functionName)
+
+	if isNative {
+		e.natives = append(e.natives, functionName)
+	}
+
+	e.functions[functionName] = value
+
+	return value
+}
+
+func (e *EnvironmentStruct) DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool) RuntimeValue {
+	// Check if already exists in EITHER namespace
+	_, existsInVariables := e.variables[variableName]
+	_, existsInFunctions := e.functions[variableName]
+
+	if existsInVariables || existsInFunctions {
 		e.errorHandler.Report(
 			int(line),
 			fmt.Sprintf("Cannot declare variable '%s' as it already exists", variableName),
@@ -102,6 +132,15 @@ func (e *EnvironmentStruct) AssignVariable(line uint, variableName string, value
 		return NIL()
 	}
 
+	// Only assign to variables, not functions
+	if _, existsInFunctions := envStruct.functions[variableName]; existsInFunctions {
+		e.errorHandler.Report(int(line), fmt.Sprintf(
+			"Cannot reassign function '%s'",
+			variableName,
+		))
+		return NIL()
+	}
+
 	envStruct.variables[variableName] = value
 	return value
 }
@@ -118,11 +157,21 @@ func (e *EnvironmentStruct) LookupVariable(line uint, variableName string) Runti
 	}
 
 	envStruct := env.(*EnvironmentStruct)
+
+	// Check functions first, then variables
+	if val, exists := envStruct.functions[variableName]; exists {
+		return val
+	}
+
 	return envStruct.variables[variableName]
 }
 
 func (e *EnvironmentStruct) ResolveVariable(line uint, variableName string) Environment {
-	if _, exists := e.variables[variableName]; exists {
+	// Check both namespaces
+	_, existsInVariables := e.variables[variableName]
+	_, existsInFunctions := e.functions[variableName]
+
+	if existsInVariables || existsInFunctions {
 		return e
 	}
 

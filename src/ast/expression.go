@@ -46,8 +46,8 @@ func (node *BinaryExpression) GetLine() uint {
 
 type UnaryExpression struct {
 	Operator *lexer.Token
-	Operand Expression
-	Line uint
+	Operand  Expression
+	Line     uint
 }
 
 func (node *UnaryExpression) Expression() {}
@@ -57,11 +57,22 @@ func (node *UnaryExpression) GetLine() uint {
 
 type AssignmentExpression struct {
 	Assignee Expression
-	Value Expression
-	Line uint
+	Value    Expression
+	Line     uint
 }
 
 func (node *AssignmentExpression) Expression() {}
 func (node *AssignmentExpression) GetLine() uint {
 	return node.Line
+}
+
+type CallExpression struct {
+	Caller    Expression   // The function being called (usually SymbolExpression)
+	Arguments []Expression // Arguments passed to the function
+	Line      uint
+}
+
+func (c *CallExpression) Expression() {}
+func (c *CallExpression) GetLine() uint {
+	return c.Line
 }

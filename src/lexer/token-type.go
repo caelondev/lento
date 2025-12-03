@@ -28,11 +28,6 @@ const (
 	MODULO
 	DOT
 
-	// LOGICAL OPERATORS ---
-	NOT
-	OR
-	AND
-
 	// COMPARISON OPERATORS ---
 	LESS
 	LESS_EQUAL
@@ -54,6 +49,12 @@ const (
 	// RESERVED KEYWORDS ---
 	VARIABLE
 	CONSTANT
+	IF
+	ELSE
+	NOT
+	OR
+	AND
+	FUNCTION
 )
 
 var RESERVED_KEYWORDS = map[string]TokenType{
@@ -62,6 +63,9 @@ var RESERVED_KEYWORDS = map[string]TokenType{
 	"not":   NOT,
 	"and":   AND,
 	"or":    OR,
+	"if":    IF,
+	"else":  ELSE,
+	"fn":    FUNCTION,
 }
 
 var TokenTypeString = map[TokenType]string{
@@ -91,6 +95,9 @@ var TokenTypeString = map[TokenType]string{
 	NOT: "NOT",
 	AND: "AND",
 	OR:  "OR",
+	ELSE: "ELSE",
+	IF:  "IF",
+	FUNCTION:  "FUNCTION",
 
 	LESS:          "LESS",
 	LESS_EQUAL:    "LESS_EQUAL",

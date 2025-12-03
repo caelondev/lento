@@ -31,3 +31,29 @@ func (node *VariableDeclarationStatement) Statement() {}
 func (node *VariableDeclarationStatement) GetLine() uint {
 	return node.Line
 }
+
+type IfStatement struct {
+    Condition  Expression
+    Consequent Statement
+    Alternate  Statement
+    Line       uint
+}
+
+func (i *IfStatement) GetLine() uint {
+    return i.Line
+}
+
+func (i *IfStatement) Statement() {}
+
+type FunctionDeclarationStatement struct {
+    Name       string
+    Parameters []string
+    Body       Statement
+    Line       uint
+}
+
+func (f *FunctionDeclarationStatement) Statement() {}
+func (f *FunctionDeclarationStatement) GetLine() uint {
+    return f.Line
+}
+

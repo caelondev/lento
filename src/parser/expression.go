@@ -9,45 +9,55 @@ import (
 )
 
 func parseExpression(p *parser, bp BindingPower) ast.Expression {
-	// Parse NUD ---
-	
 	tokenType := p.currentTokenType()
 	nudFunction, exists := nudLU[tokenType]
 
 	if p.isEOF() {
 		p.errorHandler.ReportError(
-			"Parser-NUD",
-			"Unexpected end of file expression",
+			"Parser",
+			"Unexpected end of input while parsing expression",
 			int(p.line),
 			65,
 		)
+		return nil
 	}
 
 	if !exists {
 		p.errorHandler.ReportError(
-			"Parser-NUD",
-			fmt.Sprintf("Unrecognized token found whilst parsing: '%s'", lexer.TokenTypeString[tokenType]),
+			"Parser",
+			fmt.Sprintf("Unexpected token '%s' - expected an expression", p.currentToken().Lexeme),
 			int(p.line),
 			65,
 		)
+		p.synchronize() // Skip to next safe point
+		return nil
 	}
 
 	left := nudFunction(p)
+	if left == nil {
+		return nil // Propagate error
+	}
 
 	for !p.isEOF() && bindingPowerLU[p.currentTokenType()] > bp {
 		tokenType = p.currentTokenType()
+		operatorBP := bindingPowerLU[tokenType]
 		ledFunction, exists := ledLU[tokenType]
 
 		if !exists {
 			p.errorHandler.ReportError(
-				"Parser-LED",
-				fmt.Sprintf("Unrecognized token found in the middle of an expression: '%s'", lexer.TokenTypeString[tokenType]),
+				"Parser",
+				fmt.Sprintf("Unexpected token '%s' in expression", p.currentToken().Lexeme),
 				int(p.line),
 				65,
 			)
+			p.synchronize()
+			return left // Return what we have so far
 		}
 
-		left = ledFunction(p, left, bindingPowerLU[p.currentTokenType()])
+		left = ledFunction(p, left, operatorBP)
+		if left == nil {
+			return nil
+		}
 	}
 
 	return left
@@ -63,17 +73,17 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 
 		return &ast.NumberExpression{
 			Value: number,
-			Line: p.line,
+			Line:  p.line,
 		}
 	case lexer.STRING:
 		return &ast.StringExpression{
 			Value: p.advance().Lexeme,
-			Line: p.line,
+			Line:  p.line,
 		}
 	case lexer.IDENTIFIER:
 		return &ast.SymbolExpression{
 			Value: p.advance().Lexeme,
-			Line: p.line,
+			Line:  p.line,
 		}
 	case lexer.LEFT_PARENTHESIS:
 		p.advance() // Eat '(' ---
@@ -92,24 +102,24 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 }
 
 func parseBinaryExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	operatorToken := p.advance() // Eat ---
-	right := parseExpression(p, DEFAULT_BP)
+	operatorToken := p.advance() // Eat operator
+	right := parseExpression(p, bp) // ← CHANGED: Use bp instead of DEFAULT_BP
 
 	return &ast.BinaryExpression{
-		Left: left,
-		Right: right,
+		Left:     left,
+		Right:    right,
 		Operator: operatorToken,
-		Line: p.line,
+		Line:     p.line,
 	}
 }
 
 func parseUnaryExpression(p *parser) ast.Expression {
 	operatorToken := p.advance()
 	value := parseExpression(p, UNARY)
-	return &ast.UnaryExpression{	
+	return &ast.UnaryExpression{
 		Operator: operatorToken,
-		Operand: value,
-		Line: p.line,
+		Operand:  value,
+		Line:     p.line,
 	}
 }
 

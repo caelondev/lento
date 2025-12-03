@@ -1,4 +1,4 @@
-# Lento
+ # Lento
 
 A lightweight, tree-walk interpreter built with Go, designed for simplicity and ease of use.
 
@@ -27,37 +27,64 @@ go install github.com/caelondev/lento@latest
 Lento supports three core data types:
 
 - **Number**: Integer and floating-point values
-  ```
+  ```lento
   42
   3.14
   -17.5
   ```
 
 - **Boolean**: Logical true/false values
-  ```
+  ```lento
   true
   false
   ```
 
-- **String**: Text enclosed in double quotes
-  ```
+- **String**: Text enclosed in quotes (single, double, or backticks for multiline)
+  ```lento
   "Hello, World!"
-  "Lento"
+  'Single quotes work too'
+  `Multiline
+  strings
+  supported`
   ```
+
+### Variables
+
+#### Declaration
+
+Declare variables using `var` for mutable values or `const` for immutable constants:
+
+```lento
+var foo = "bar";
+const baz = -10;
+var uninitialized;  // defaults to nil
+```
+
+#### Reassignment
+
+Mutable variables can be reassigned:
+
+```lento
+foo = "Hello, World!";
+```
+
+Note: Constants cannot be reassigned after declaration.
 
 ### Operators
 
-#### Logical Operators
+#### Arithmetic Operators
 
-```
-and    // Logical AND
-or     // Logical OR
-not    // Logical NOT
+```lento
++      // Addition
+-      // Subtraction
+*      // Multiplication
+/      // Division
+%      // Modulo
 ```
 
 #### Comparison Operators
 
-```
+```lento
 <      // Less than
 <=     // Less than or equal to
 >      // Greater than
@@ -66,33 +93,91 @@ not    // Logical NOT
 !=     // Not equal to
 ```
 
-### Variables
+#### Logical Operators
 
-#### Declaration
-
-Declare variables using `var` for mutable values or `const` for immutable constants:
-
-```
-var foo = "bar";
-const baz = -10;
+```lento
+and    // Logical AND
+or     // Logical OR
+not    // Logical NOT
 ```
 
-#### Reassignment
+#### Assignment Operators
 
-Mutable variables can be reassigned:
-
+```lento
+=      // Assignment
++=     // Add and assign
+-=     // Subtract and assign
+*=     // Multiply and assign
+/=     // Divide and assign
+%=     // Modulo and assign
 ```
-foo = "Hello, World!";
+
+### Control Flow
+
+#### If Statements
+
+```lento
+// Simple if
+if (x > 10) {
+    x = x + 1;  // x is 11 now
+}
+
+// If-else
+if (x > 10) {
+    x = x * 2;  // x is doubled
+} else {
+    x = 5;      // x is 5 now
+}
+
+// Else-if chains
+if (x > 100) {
+    x = 100;    // cap at 100
+} else if (x > 10) {
+    x = x + 5;  // add 5
+} else {
+    x = 0;      // reset to 0
+}
+
+// Single-line syntax (parentheses optional with braces)
+if true { x = 42; }
+if (x > 0) x = x - 1;
 ```
 
-Note: Constants cannot be reassigned after declaration.
+### Functions
+
+#### Function Declaration
+
+Define functions using the `fn` keyword:
+
+```lento
+// Function with parameters
+fn add(a, b) {
+    var result = a + b;
+    result;  // last expression is returned
+}
+
+// Function with single statement body
+fn square(x) x = x * x;
+
+// Function with multiple statements
+fn increment(value) {
+    value = value + 1;
+    value;  // value is incremented
+}
+```
+
+Note: Functions are constants and cannot be reassigned after declaration. Function calls are not yet implemented.
 
 ## Examples
 
-```
+```lento
 // Variable declaration and manipulation
 var counter = 0;
 const maxValue = 100;
+
+// Arithmetic operations
+var result = (10 + 5) * 2;  // result is 30
+var remainder = 17 % 5;      // remainder is 2
 
 // Logical operations
 var isValid = true and (counter < maxValue);
@@ -102,7 +187,40 @@ var isComplete = counter >= maxValue;
 
 // String manipulation
 var greeting = "Hello";
-greeting = greeting + ", World!";
+greeting = greeting + ", World!";  // greeting is "Hello, World!" now
+
+// Control flow
+if (counter < maxValue) {
+    counter = counter + 1;  // counter is 1 now
+}
+
+// Functions
+fn factorial(n) {
+    if (n <= 1) {
+        n = 1;
+    }
+    n;  // returns n
+}
+
+// Function with closures
+var x = 10;
+fn makeAdder() {
+    x;  // Captures x from outer scope
+}
+```
+
+## REPL
+
+Lento includes an interactive REPL (Read-Eval-Print Loop) for quick experimentation:
+
+```bash
+$ lento
+>> var x = 42;
+42
+>> x * 2;
+84
+>> fn greet(name) name = "Hello, " + name;
+[ greet function ]
 ```
 
 ## Contributing

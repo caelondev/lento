@@ -2,6 +2,8 @@ package runtime
 
 import (
 	"fmt"
+
+	"github.com/caelondev/lento/src/ast"
 )
 
 type ValueTypes string
@@ -53,6 +55,21 @@ func (n *NumberValue) Type() ValueTypes {
 
 func (n *NumberValue) String() string {
 	return fmt.Sprintf("%v", n.Value)
+}
+
+type FunctionValue struct {
+	Name string
+	Parameters []string
+	Body ast.Statement
+	Environment Environment
+}
+
+func (n *FunctionValue) Type() ValueTypes {
+	return BOOLEAN_VALUE
+}
+
+func (n *FunctionValue) String() string {
+	return fmt.Sprintf("[ %s function ]", n.Name)
 }
 
 type BooleanValue struct {

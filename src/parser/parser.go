@@ -27,7 +27,7 @@ func ProduceAST(tokens []*lexer.Token, errorHandler *errorhandler.ErrorHandler) 
 
 	return ast.BlockStatement{
 		Body: body,
-		Line:  parser.line,
+		Line: parser.line,
 	}
 }
 
@@ -99,3 +99,18 @@ func (p *parser) advance() *lexer.Token {
 	return token
 }
 
+func (p *parser) synchronize() {
+	for !p.isEOF() {
+		if p.currentTokenType() == lexer.SEMICOLON {
+			p.advance()
+			return
+		}
+		p.advance()
+	}
+}
+
+func (p *parser) ignore(tokenType lexer.TokenType) {
+	if p.currentTokenType() == tokenType {
+		p.advance()
+	}
+}

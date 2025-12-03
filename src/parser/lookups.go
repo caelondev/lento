@@ -66,10 +66,12 @@ func createTokenLookups() {
 	led(lexer.MODULO, MULTIPLICATIVE, parseBinaryExpression)
 	led(lexer.STAR, MULTIPLICATIVE, parseBinaryExpression)
 
-	// DECLARATION ---
+	// STATEMENTS ---
 	led(lexer.ASSIGNMENT, ASSIGNMENT, parseAssignmentExpression)
 	statement(lexer.VARIABLE, parseVariableDeclaration)
 	statement(lexer.CONSTANT, parseVariableDeclaration)
+	statement(lexer.IF, parseIfStatement)
+	statement(lexer.FUNCTION, parseFunctionDeclaration)
 
 	// UNARY OPERATORS ---
 	nud(lexer.NOT, parseUnaryExpression)

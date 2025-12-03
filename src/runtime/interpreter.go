@@ -32,6 +32,10 @@ func (i *Interpreter) EvaluateStatement(node ast.Statement) RuntimeValue {
 		return i.EvaluateExpression(n.Expression)
 	case *ast.VariableDeclarationStatement:
 		return i.evaluateVariableDeclarationStatement(n)
+	case *ast.IfStatement:
+		return i.evaluateIfStatement(n)
+	case *ast.FunctionDeclarationStatement:
+		return i.evaluateFunctionDeclaration(n)
 
 	default:
 		i.errorHandler.Report(int(i.line), fmt.Sprintf("Unrecognized AST Statement whilst evaluating: %T\n", node))

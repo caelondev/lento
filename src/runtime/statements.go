@@ -17,8 +17,39 @@ func (i *Interpreter) evaluateBlockStatement(block *ast.BlockStatement) RuntimeV
 }
 
 func (i *Interpreter) evaluateVariableDeclarationStatement(decl *ast.VariableDeclarationStatement) RuntimeValue {
+	var value RuntimeValue = NIL()
+
 	env := i.GetEnvironment()
-	value := i.EvaluateExpression(decl.Value)
+	if decl.Value != nil {
+		value = i.EvaluateExpression(decl.Value)
+	}
+
 	env.DeclareVariable(i.line, decl.Identifier, value, decl.IsConstant, false)
 	return value
+}
+
+func (i *Interpreter) evaluateIfStatement(stmt *ast.IfStatement) RuntimeValue {
+	condition := i.EvaluateExpression(stmt.Condition)
+
+	if isTruthy(condition) {
+		i.EvaluateStatement(stmt.Consequent)
+	} else {
+		i.EvaluateStatement(stmt.Alternate)
+	}
+
+	return NIL()
+}
+
+func (i *Interpreter) evaluateFunctionDeclaration(stmt *ast.FunctionDeclarationStatement) RuntimeValue {
+	env := i.GetEnvironment()
+
+	fn := &FunctionValue{
+		Name: stmt.Name,
+		Parameters: stmt.Parameters,
+		Body: stmt.Body,
+		Environment: env,
+	}
+
+	env.DeclareFunction(i.line, stmt.Name, fn, false)
+	return fn
 }
