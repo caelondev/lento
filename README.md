@@ -150,23 +150,18 @@ if (x > 0) x = x - 1;
 Define functions using the `fn` keyword:
 
 ```lento
-// Function with parameters
-fn add(a, b) {
-    var result = a + b;
-    result;  // last expression is returned
-}
-
-// Function with single statement body
-fn square(x) x = x * x;
-
-// Function with multiple statements
-fn increment(value) {
-    value = value + 1;
-    value;  // value is incremented
+fn recursivePrint(y) { // NOTE: `y` is a pass-by-value parameter
+  var z = y+1;         // Modifying it won't affect the argument
+  print(z);  b         // of the caller
+  recursivePrint(z);
 }
 ```
 
-Note: Functions are constants and cannot be reassigned after declaration. Function calls are not yet implemented.
+Calling a function
+```lento
+print("Hello, World!"); // Calls the `print` native function
+add(x, y);
+```
 
 ## Examples
 
@@ -195,11 +190,8 @@ if (counter < maxValue) {
 }
 
 // Functions
-fn factorial(n) {
-    if (n <= 1) {
-        n = 1;
-    }
-    n;  // returns n
+fn printHelloWorld() { // Why not?
+  print("Hello, World!");
 }
 
 // Function with closures
