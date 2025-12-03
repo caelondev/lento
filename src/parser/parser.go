@@ -82,8 +82,8 @@ func (p *parser) expectError(err string, expectedTypes ...lexer.TokenType) *lexe
 		p.errorHandler.ReportError(
 			"Parser-Expect",
 			err,
-			int(p.line),
-			65,
+			p.line,
+			errorhandler.UnexpectedTokenError,
 		)
 	}
 

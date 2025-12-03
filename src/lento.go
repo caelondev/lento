@@ -25,7 +25,6 @@ func Lento() {
 	} else {
 		runRepl()
 	}
-
 }
 
 func runFile(filepath string) {
@@ -37,7 +36,7 @@ func runFile(filepath string) {
 	run(string(bytes))
 
 	if ErrorHandler.HadError {
-		os.Exit(ErrorHandler.ErrorCode)
+		os.Exit(1)
 	}
 }
 
@@ -49,6 +48,10 @@ func runRepl() {
 			break
 		}
 		line := scanner.Text()
+
+		if line == "*exit" {
+			os.Exit(0)
+		}
 
 		result := run(line)
 		fmt.Printf("%v\n\n", result)
@@ -70,15 +73,11 @@ func run(sourceCode string) runtime.RuntimeValue {
 		return nil
 	}
 
-	// for _, token := range tokens {
-	// 	token.String()
-	// }
-
 	// litter.Dump(ast)
 
 	var result runtime.RuntimeValue
 	for _, statement := range ast.Body {
-		result = interpreter.EvaluateStatement(statement)
+		result = interpreter.EvaluateStatement(statement, Environment)
 		if ErrorHandler.HadError {
 			return nil
 		}

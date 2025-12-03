@@ -6,19 +6,18 @@ import (
 
 type ErrorHandler struct {
 	HadError bool
-	ErrorCode int
+	ErrorMessage ErrorType
 }
 
 func New() *ErrorHandler {
 	return &ErrorHandler{}
 }
 
-func (e *ErrorHandler) Report(line int, errorMessage string) {
-	e.ReportError("Report", errorMessage, line, 65)
+func (e *ErrorHandler) Report(line uint, errorMessage string) {
+	e.ReportError("Report", errorMessage, line, ReportError)
 }
 
-func (e *ErrorHandler) ReportError(reporter, errorMessage string, line, code int) {
+func (e *ErrorHandler) ReportError(reporter, errorMessage string, line uint, code ErrorType) {
 	fmt.Printf("%s::Error on line %d: %s\n", reporter, int(line), errorMessage)
-	e.ErrorCode = code
 	e.HadError = true
 }

@@ -33,6 +33,20 @@ func (n *NilValue) String() string {
 	return "nil"
 }
 
+type NativeFunctionValue struct {
+	Name string
+	Call func(args []RuntimeValue, env Environment, i *Interpreter) RuntimeValue
+}
+
+func (n *NativeFunctionValue) Type() ValueTypes {
+	return NATIVE_FUNCTION_VALUE
+}
+
+func (n *NativeFunctionValue) String() string {
+	return fmt.Sprintf("[ native function '%s' ]", n.Name)
+}
+
+
 type StringValue struct {
 	Value string
 }
@@ -69,7 +83,7 @@ func (n *FunctionValue) Type() ValueTypes {
 }
 
 func (n *FunctionValue) String() string {
-	return fmt.Sprintf("[ %s function ]", n.Name)
+	return fmt.Sprintf("[ function '%s' ]", n.Name)
 }
 
 type BooleanValue struct {
@@ -90,5 +104,12 @@ func NIL() *NilValue {
 
 func BOOLEAN(value bool) *BooleanValue {
 	return &BooleanValue{ Value: value }
+}
+
+func NATIVE_FUNCTION(name string, call func([]RuntimeValue, Environment, *Interpreter) RuntimeValue) *NativeFunctionValue {
+	return &NativeFunctionValue{
+		Name: name,
+		Call: call,
+	}
 }
 

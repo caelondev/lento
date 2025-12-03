@@ -1,0 +1,15 @@
+package errorhandler
+
+type ErrorType string
+
+const (
+	ArgumentLengthError ErrorType = "ENGTH_ARGS_ERR"
+	ReportError ErrorType = "REPORT_ERR"
+	ExpectedTypeError ErrorType = "EXPECTED_TYPE_ERR"
+	UnterminatedError ErrorType = "UNTERMINATED_ERR"
+	UnknownTokenError ErrorType = "UNKNOWN_TOKEN_ERR"
+	UnexpectedTokenError ErrorType = "UNEXPEXTED_TOKEN_ERR"
+	InvalidArgumentError ErrorType = "INVALID_ARGUMENT_ERR"
+	NonFunctionExpressionError ErrorType = "NON_FUNCTION_EXPR_ERR"
+	NativeFunctionError ErrorType = "NATIVE_FUNCTION_ERR"
+)

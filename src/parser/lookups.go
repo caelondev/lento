@@ -73,6 +73,9 @@ func createTokenLookups() {
 	statement(lexer.IF, parseIfStatement)
 	statement(lexer.FUNCTION, parseFunctionDeclaration)
 
+	// CALL EXPRESSION ---
+	led(lexer.LEFT_PARENTHESIS, CALL, parseCallExpression)
+
 	// UNARY OPERATORS ---
 	nud(lexer.NOT, parseUnaryExpression)
 	nud(lexer.MINUS, parseUnaryExpression)

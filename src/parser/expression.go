@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/caelondev/lento/src/ast"
+	errorhandler "github.com/caelondev/lento/src/error-handler"
 	"github.com/caelondev/lento/src/lexer"
 )
 
@@ -16,8 +17,8 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 		p.errorHandler.ReportError(
 			"Parser",
 			"Unexpected end of input while parsing expression",
-			int(p.line),
-			65,
+			p.line,
+			errorhandler.UnexpectedTokenError,
 		)
 		return nil
 	}
@@ -26,8 +27,8 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 		p.errorHandler.ReportError(
 			"Parser",
 			fmt.Sprintf("Unexpected token '%s' - expected an expression", p.currentToken().Lexeme),
-			int(p.line),
-			65,
+			p.line,
+			errorhandler.UnknownTokenError,
 		)
 		p.synchronize() // Skip to next safe point
 		return nil
@@ -47,8 +48,8 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 			p.errorHandler.ReportError(
 				"Parser",
 				fmt.Sprintf("Unexpected token '%s' in expression", p.currentToken().Lexeme),
-				int(p.line),
-				65,
+				p.line,
+				errorhandler.UnexpectedTokenError,
 			)
 			p.synchronize()
 			return left // Return what we have so far
@@ -68,7 +69,7 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 	case lexer.NUMBER:
 		number, err := strconv.ParseFloat(p.advance().Lexeme, 64)
 		if err != nil {
-			p.errorHandler.Report(int(p.line), fmt.Sprintf("An Error occured whilst trying to parse a number:\n%s", err))
+			p.errorHandler.Report(p.line, fmt.Sprintf("An Error occured whilst trying to parse a number:\n%s", err))
 		}
 
 		return &ast.NumberExpression{
@@ -93,7 +94,7 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 
 	default:
 		p.errorHandler.Report(
-			int(p.line),
+			p.line,
 			fmt.Sprintf("Unrecognized primary token: %s", lexer.TokenTypeString[p.currentTokenType()]),
 		)
 	}
@@ -102,7 +103,7 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 }
 
 func parseBinaryExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	operatorToken := p.advance() // Eat operator
+	operatorToken := p.advance()    // Eat operator
 	right := parseExpression(p, bp) // ← CHANGED: Use bp instead of DEFAULT_BP
 
 	return &ast.BinaryExpression{
@@ -125,7 +126,7 @@ func parseUnaryExpression(p *parser) ast.Expression {
 
 func parseAssignmentExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
 	if _, ok := left.(*ast.SymbolExpression); !ok {
-		p.errorHandler.Report(int(p.line), "Invalid left-hand assignment")
+		p.errorHandler.Report(p.line, "Invalid left-hand assignment")
 
 		p.advance()
 		parseExpression(p, DEFAULT_BP)

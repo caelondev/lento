@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/caelondev/lento/src/ast"
+	errorhandler "github.com/caelondev/lento/src/error-handler"
 	"github.com/caelondev/lento/src/lexer"
 )
 
@@ -30,9 +31,9 @@ func parseStatement(p *parser) ast.Statement {
 		p.errorHandler.ReportError(
 			"Parser",
 			fmt.Sprintf("Expected ';' after expression, got '%s'", p.currentToken().Lexeme),
-			int(p.line),
-			65,
-			)
+			p.line,
+			errorhandler.UnexpectedTokenError,
+		)
 		p.synchronize()
 		return nil
 	}
@@ -51,7 +52,7 @@ func parseVariableDeclaration(p *parser) ast.Statement {
 	//  var <identifier>;
 	//	const <identifier> = <value>; ---
 	//
-	
+
 	isConstant := p.advance().TokenType == lexer.CONSTANT
 	identifier := p.expect(lexer.IDENTIFIER).Lexeme
 	var value ast.Expression
@@ -66,8 +67,8 @@ func parseVariableDeclaration(p *parser) ast.Statement {
 	return &ast.VariableDeclarationStatement{
 		IsConstant: isConstant,
 		Identifier: identifier,
-		Value: value,
-		Line: p.line,
+		Value:      value,
+		Line:       p.line,
 	}
 }
 
@@ -105,7 +106,7 @@ func parseIfStatement(p *parser) ast.Statement {
 
 	var condition ast.Expression
 	var consequent ast.Statement // If block ---
-	var alternate ast.Statement // else block
+	var alternate ast.Statement  // else block
 
 	p.advance() // Eat 'if' ---
 
@@ -133,10 +134,10 @@ func parseIfStatement(p *parser) ast.Statement {
 	}
 
 	return &ast.IfStatement{
-		Condition: condition,
+		Condition:  condition,
 		Consequent: consequent,
-		Alternate: alternate,
-		Line: p.line,
+		Alternate:  alternate,
+		Line:       p.line,
 	}
 }
 
@@ -145,7 +146,7 @@ func parseFunctionDeclaration(p *parser) ast.Statement {
 	// fn identifier(params) { ... }
 	// fn identifier(params) ...
 	//
-	
+
 	var identifier string
 	var parameters []string
 	var body ast.Statement
@@ -176,11 +177,42 @@ func parseFunctionDeclaration(p *parser) ast.Statement {
 		body = parseStatement(p)
 	}
 
-
 	return &ast.FunctionDeclarationStatement{
-		Name: identifier,
+		Name:       identifier,
 		Parameters: parameters,
-		Body: body,
-		Line: p.line,
+		Body:       body,
+		Line:       p.line,
+	}
+}
+
+func parseCallExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
+	p.advance() // Eat '(' ---
+
+	arguments := make([]ast.Expression, 0)
+
+	// Parse arguments (comma-separated expressions)
+	if p.currentTokenType() != lexer.RIGHT_PARENTHESIS {
+		// Parse first argument
+		arg := parseExpression(p, DEFAULT_BP)
+		if arg != nil {
+			arguments = append(arguments, arg)
+		}
+
+		// Parse remaining arguments
+		for p.currentTokenType() == lexer.COMMA {
+			p.advance() // eat comma
+			arg := parseExpression(p, DEFAULT_BP)
+			if arg != nil {
+				arguments = append(arguments, arg)
+			}
+		}
+	}
+
+	p.expect(lexer.RIGHT_PARENTHESIS)
+
+	return &ast.CallExpression{
+		Caller:    left,
+		Arguments: arguments,
+		Line:      p.line,
 	}
 }

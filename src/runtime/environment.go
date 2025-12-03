@@ -2,14 +2,13 @@ package runtime
 
 import (
 	"fmt"
-	errorhandler "github.com/caelondev/lento/src/error-handler"
 	"slices"
+	errorhandler "github.com/caelondev/lento/src/error-handler"
 )
 
 type Environment interface {
-	DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool) RuntimeValue
-	DeclareFunction(line uint, functionName string, value RuntimeValue, isNative bool) RuntimeValue
-	AssignVariable(line uint, variableName string, value RuntimeValue) RuntimeValue
+	DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool)
+	AssignVariable(line uint, variableName string, value RuntimeValue)
 	LookupVariable(line uint, variableName string) RuntimeValue
 	ResolveVariable(line uint, variableName string) Environment
 	IsNative(variableName string) bool
@@ -18,7 +17,6 @@ type Environment interface {
 type EnvironmentStruct struct {
 	parent       Environment
 	variables    map[string]RuntimeValue
-	functions    map[string]RuntimeValue // Separate function namespace
 	constants    []string
 	natives      []string
 	errorHandler *errorhandler.ErrorHandler
@@ -28,7 +26,6 @@ func NewEnvironment(parent Environment, errorHandler *errorhandler.ErrorHandler)
 	env := &EnvironmentStruct{
 		parent:       parent,
 		variables:    make(map[string]RuntimeValue),
-		functions:    make(map[string]RuntimeValue),
 		constants:    make([]string, 0),
 		natives:      make([]string, 0),
 		errorHandler: errorHandler,
@@ -44,47 +41,29 @@ func DeclareGlobalVariables(env Environment) {
 	isConstant := true
 	isNative := true
 
+	// Core constants
 	env.DeclareVariable(0, "nil", NIL(), isConstant, isNative)
-	env.DeclareVariable(0, "true", BOOLEAN(true), isConstant, isNative)
 	env.DeclareVariable(0, "false", BOOLEAN(false), isConstant, isNative)
+	env.DeclareVariable(0, "true", BOOLEAN(true), isConstant, isNative)
+
+	// Native functions
+	env.DeclareVariable(0, "print", NATIVE_FUNCTION("print", NATIVE_PRINT_FUNCTION), isConstant, isNative)
+	env.DeclareVariable(0, "len", NATIVE_FUNCTION("len", NATIVE_LEN_FUNCTION), isConstant, isNative)
+	env.DeclareVariable(0, "toUpper", NATIVE_FUNCTION("toUpper", NATIVE_TO_UPPER_FUNCTION), isConstant, isNative)
+	env.DeclareVariable(0, "toLower", NATIVE_FUNCTION("toLower", NATIVE_TO_LOWER_FUNCTION), isConstant, isNative)
+	env.DeclareVariable(0, "str", NATIVE_FUNCTION("str", NATIVE_STR_FUNCTION), isConstant, isNative)
+	env.DeclareVariable(0, "num", NATIVE_FUNCTION("num", NATIVE_NUM_FUNCTION), isConstant, isNative)
 }
 
-func (e *EnvironmentStruct) DeclareFunction(line uint, functionName string, value RuntimeValue, isNative bool) RuntimeValue {
-	// Check if already exists in EITHER namespace
-	_, existsInFunctions := e.functions[functionName]
-	_, existsInVariables := e.variables[functionName]
+func (e *EnvironmentStruct) DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool) {
+	_, exists := e.variables[variableName]
 
-	if existsInFunctions || existsInVariables {
+	if exists {
 		e.errorHandler.Report(
-			int(line),
-			fmt.Sprintf("Cannot declare function '%s' as it already exists", functionName),
-		)
-		return NIL()
-	}
-
-	// Functions are always constants
-	e.constants = append(e.constants, functionName)
-
-	if isNative {
-		e.natives = append(e.natives, functionName)
-	}
-
-	e.functions[functionName] = value
-
-	return value
-}
-
-func (e *EnvironmentStruct) DeclareVariable(line uint, variableName string, value RuntimeValue, isConstant bool, isNative bool) RuntimeValue {
-	// Check if already exists in EITHER namespace
-	_, existsInVariables := e.variables[variableName]
-	_, existsInFunctions := e.functions[variableName]
-
-	if existsInVariables || existsInFunctions {
-		e.errorHandler.Report(
-			int(line),
+			line,
 			fmt.Sprintf("Cannot declare variable '%s' as it already exists", variableName),
 		)
-		return NIL()
+		return
 	}
 
 	if isConstant {
@@ -96,19 +75,17 @@ func (e *EnvironmentStruct) DeclareVariable(line uint, variableName string, valu
 	}
 
 	e.variables[variableName] = value
-
-	return value
 }
 
-func (e *EnvironmentStruct) AssignVariable(line uint, variableName string, value RuntimeValue) RuntimeValue {
+func (e *EnvironmentStruct) AssignVariable(line uint, variableName string, value RuntimeValue) {
 	env := e.ResolveVariable(line, variableName)
 
 	if env == nil {
-		e.errorHandler.Report(int(line), fmt.Sprintf(
+		e.errorHandler.Report(line, fmt.Sprintf(
 			"Invalid left-hand assignment: '%s' is not defined",
 			variableName,
 		))
-		return NIL()
+		return
 	}
 
 	envStruct := env.(*EnvironmentStruct)
@@ -117,39 +94,29 @@ func (e *EnvironmentStruct) AssignVariable(line uint, variableName string, value
 	isConstant := slices.Contains(envStruct.constants, variableName)
 
 	if isNative {
-		e.errorHandler.Report(int(line), fmt.Sprintf(
+		e.errorHandler.Report(line, fmt.Sprintf(
 			"Cannot reassign keyword '%s'",
 			variableName,
 		))
-		return NIL()
+		return
 	}
 
 	if isConstant {
-		e.errorHandler.Report(int(line), fmt.Sprintf(
+		e.errorHandler.Report(line, fmt.Sprintf(
 			"Cannot reassign constant '%s'",
 			variableName,
 		))
-		return NIL()
-	}
-
-	// Only assign to variables, not functions
-	if _, existsInFunctions := envStruct.functions[variableName]; existsInFunctions {
-		e.errorHandler.Report(int(line), fmt.Sprintf(
-			"Cannot reassign function '%s'",
-			variableName,
-		))
-		return NIL()
+		return
 	}
 
 	envStruct.variables[variableName] = value
-	return value
 }
 
 func (e *EnvironmentStruct) LookupVariable(line uint, variableName string) RuntimeValue {
 	env := e.ResolveVariable(line, variableName)
 
 	if env == nil {
-		e.errorHandler.Report(int(line), fmt.Sprintf(
+		e.errorHandler.Report(line, fmt.Sprintf(
 			"Cannot resolve variable '%s'",
 			variableName,
 		))
@@ -157,21 +124,11 @@ func (e *EnvironmentStruct) LookupVariable(line uint, variableName string) Runti
 	}
 
 	envStruct := env.(*EnvironmentStruct)
-
-	// Check functions first, then variables
-	if val, exists := envStruct.functions[variableName]; exists {
-		return val
-	}
-
 	return envStruct.variables[variableName]
 }
 
 func (e *EnvironmentStruct) ResolveVariable(line uint, variableName string) Environment {
-	// Check both namespaces
-	_, existsInVariables := e.variables[variableName]
-	_, existsInFunctions := e.functions[variableName]
-
-	if existsInVariables || existsInFunctions {
+	if _, exists := e.variables[variableName]; exists {
 		return e
 	}
 
@@ -182,6 +139,7 @@ func (e *EnvironmentStruct) ResolveVariable(line uint, variableName string) Envi
 	return e.parent.ResolveVariable(line, variableName)
 }
 
+// Walk up scopes to check native
 func (e *EnvironmentStruct) IsNative(variableName string) bool {
 	if slices.Contains(e.natives, variableName) {
 		return true

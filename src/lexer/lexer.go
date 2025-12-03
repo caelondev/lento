@@ -108,8 +108,8 @@ func (l *Lexer) AnalyzeTokens() {
 			l.ErrorHandler.ReportError(
 				"Lexer-Tokenizer",
 				fmt.Sprintf("Unrecognized Token found '%c'", char),
-				int(l.Line),
-				65,
+				l.Line,
+				errorhandler.UnknownTokenError,
 			)
 			return
 		}
@@ -128,8 +128,8 @@ func (l *Lexer) handleMultilineString() {
 		l.ErrorHandler.ReportError(
 			"Lexer-Tokenizer",
 			"Unterminated multiline string",
-			int(l.Line),
-			65,
+			l.Line,
+			errorhandler.UnterminatedError,
 			)
 	}
 	l.match('`') // Check and eat '`' closing string --- 
@@ -149,8 +149,8 @@ func (l *Lexer) handleString(char rune) {
 		l.ErrorHandler.ReportError(
 			"Lexer-Tokenizer",
 			"Unterminated non-multiline string",
-			int(l.Line),
-			65,
+			l.Line,
+			errorhandler.UnterminatedError,
 		)
 	}
 
@@ -235,8 +235,8 @@ func (l *Lexer) handleNumbers() {
 			l.ErrorHandler.ReportError(
 				"Lexer-Tokenizer",
 				"Expected number after '.' operator...",
-				int(l.Line),
-				65,
+				l.Line,
+				errorhandler.ExpectedTypeError,
 			)
 		}
 
@@ -251,7 +251,7 @@ func (l *Lexer) handleNumbers() {
 	parsedNumber, error := strconv.ParseFloat(value, 64)
 	if error != nil {
 		l.ErrorHandler.Report(
-			int(l.Line),
+			l.Line,
 			fmt.Sprintf("Failed to parse %s into a float whilst tokenizing", value),
 		)
 	}
@@ -332,8 +332,8 @@ func (l *Lexer) expectError(expected rune, errorMessage string) {
 		l.ErrorHandler.ReportError(
 			"Lexer-Tokenizer",
 			errorMessage,
-			int(l.Line),
-			65,
+			l.Line,
+			errorhandler.ExpectedTypeError,
 		)
 	}
 }
