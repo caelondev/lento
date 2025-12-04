@@ -31,6 +31,8 @@ func (i *Interpreter) EvaluateExpression(expr ast.Expression, env Environment) R
 		return i.evaluateCallExpression(n, env)
 	case *ast.IndexExpression:
 		return i.evaluateIndexExpression(n, env)
+	case *ast.ObjectExpression:
+		return i.evaluateObjectExpression(n, env)
 
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Expression whilst evaluating: %T\n", expr))
@@ -52,7 +54,21 @@ func evaluateStringExpression(expr *ast.StringExpression) RuntimeValue {
 	return &StringValue{Value: value}
 }
 
+func (i *Interpreter) evaluateObjectExpression(expr *ast.ObjectExpression, env Environment) RuntimeValue {
+	var properties []ObjectPropertyValue
+
+	for _, property := range expr.Properties {
+		value := i.EvaluateExpression(property.Value, env)
+		properties = append(properties, ObjectPropertyValue{Key: property.Key, Value: value})
+	}
+
+	return &ObjectValue{
+		Properties: properties,
+	}
+}
+
 func (i *Interpreter) evaluateArrayExpression(expr *ast.ArrayExpression, env Environment) RuntimeValue {
+
 	var elements []RuntimeValue
 
 	for _, element := range expr.Elements {
@@ -279,46 +295,46 @@ func (i *Interpreter) evaluateCallExpression(call *ast.CallExpression, env Envir
 }
 
 func (i *Interpreter) evaluateIndexExpression(expr *ast.IndexExpression, env Environment) RuntimeValue {
-	array := i.EvaluateExpression(expr.Array, env)
+	target := i.EvaluateExpression(expr.Array, env)
 	index := i.EvaluateExpression(expr.Index, env)
 
-	arrayValue, isArray := array.(*ArrayValue)
-	if !isArray {
-		i.errorHandler.ReportError(
-			"Interpreter-Array",
-			fmt.Sprintf("Cannot index expression as it is not an array (type of '%s')", array.Type()),
-			i.line,
-			errorhandler.ArrayIndexError,
-		)
-		return NIL()
-	}
-
-	indexValue, ok := index.(*NumberValue)
-	if !ok {
-		i.errorHandler.ReportError(
-			"Interpreter-Array",
-			fmt.Sprintf("Invalid indexing value (type of %s)", array.Type()),
-			i.line,
-			errorhandler.ArrayIndexError,
-		)
-		return NIL()
-	}
-
-	if len(arrayValue.Elements) < int(indexValue.Value) {
-		i.errorHandler.ReportError(
-			"Interpreter-Array",
-			fmt.Sprintf("Index %d out of bounds as the array only got %d elements", int(indexValue.Value), len(arrayValue.Elements)),
-			i.line,
-			errorhandler.ArrayIndexError,
-		)
-		return NIL()
-	}
-
-	for idx, array := range arrayValue.Elements {
-		if idx == int(indexValue.Value) {
-			return array
+	// Handle arrays
+	if arrayValue, ok := target.(*ArrayValue); ok {
+		indexValue, ok := index.(*NumberValue)
+		if !ok {
+			i.errorHandler.Report(i.line, "Array index must be a number")
+			return NIL()
 		}
+		
+		idx := int(indexValue.Value)
+		if idx < 0 || idx >= len(arrayValue.Elements) {
+			i.errorHandler.Report(i.line, 
+				fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)))
+			return NIL()
+		}
+		
+		return arrayValue.Elements[idx]
 	}
 
+	// Handle objects
+	if objValue, ok := target.(*ObjectValue); ok {
+		keyValue, ok := index.(*StringValue)
+		if !ok {
+			i.errorHandler.Report(i.line, "Object key must be a string")
+			return NIL()
+		}
+		
+		for _, prop := range objValue.Properties {
+			if prop.Key == keyValue.Value {
+				return prop.Value
+			}
+		}
+		
+		// Key not found - return nil
+		return NIL()
+	}
+
+	i.errorHandler.Report(i.line, 
+		fmt.Sprintf("Cannot index type '%s'", target.Type()))
 	return NIL()
 }

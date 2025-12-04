@@ -1,4 +1,4 @@
- # Lento
+# Lento
 
 A lightweight, tree-walk interpreter built with Go, designed for simplicity and ease of use.
 
@@ -27,6 +27,7 @@ go install github.com/caelondev/lento@latest
 Lento supports three core data types:
 
 - **Number**: Integer and floating-point values
+
   ```lento
   42
   3.14
@@ -34,12 +35,14 @@ Lento supports three core data types:
   ```
 
 - **Boolean**: Logical true/false values
+
   ```lento
   true
   false
   ```
 
 - **String**: Text enclosed in quotes (single, double, or backticks for multiline)
+
   ```lento
   "Hello, World!"
   'Single quotes work too'
@@ -47,6 +50,22 @@ Lento supports three core data types:
   strings
   supported`
   ```
+
+- Arrays: 1D list of datas (can be string, number, boolean, and even another array)
+
+```lento
+  [0, "Hello, World!", true, [x, [y]]]
+```
+
+- Objext: List of key-value pair
+
+```lento
+  {
+    firstName: "Foo",
+    lastName: "Bar",
+    age: 22,
+  };
+```
 
 ### Variables
 
@@ -60,56 +79,106 @@ const baz = -10;
 var uninitialized;  // defaults to nil
 ```
 
-#### Reassignment
+### Printing values
 
-Mutable variables can be reassigned:
+Values can be printed in two ways (or more)
+
+#### Arrays
+
+You can print array values by either accessing the array index or printing the array itself
 
 ```lento
-foo = "Hello, World!";
+  print([]) // Prints an empty array
+
+  var fruits = ["Apple", "Orange", "Banana"]
+
+  print(fruits[0])        // Prints "Apple"
+  print(fruits)           // Prints the whole array
+  print([true, false][0]) // Prints `true` (not recommended to print arrays this way)
 ```
 
-Note: Constants cannot be reassigned after declaration.
+#### Objects
+
+Same as the array, Objects can also be printed by either printing it directly or accessing the key of the object
+
+```lento
+  var object = {
+    name: "Bob",
+    age: 25,
+    location: {
+      street: "FooBar street",
+      continent: "Asia",
+    }
+  }
+  print({}) // Prints an empty object
+
+  print(object[name])             // Prints "Bob"
+  print(object[location])         // Prints the `location` object
+  print(object[location][street]) // Prints "FooBar street"
+```
+
+### Reassignment
+
+#### Variables
+
+Non-constant variables can be reassigned:
+
+```lento
+  var foo = "Bar";
+  print(foo); // Outputs "Bar"
+  foo = "Hello, World!";
+  print(foo); // Outputs "Hello, World!"
+```
+
+#### Arrays
+
+```lento
+  var bar = ["Foo", "Baz"];
+  bar[1] = "Bar";
+
+  print(bar[1]) // Outputs "Bar"
+```
 
 ### Operators
 
 #### Arithmetic Operators
 
 ```lento
-+      // Addition
--      // Subtraction
-*      // Multiplication
-/      // Division
-%      // Modulo
+  +      // Addition
+  -      // Subtraction
+  *      // Multiplication
+  /      // Division
+  %      // Modulo
 ```
 
 #### Comparison Operators
 
 ```lento
-<      // Less than
-<=     // Less than or equal to
->      // Greater than
->=     // Greater than or equal to
-==     // Equal to
-!=     // Not equal to
+  <      // Less than
+  <=     // Less than or equal to
+  >      // Greater than
+  >=     // Greater than or equal to
+  ==     // Equal to
+  !=     // Not equal to
 ```
 
 #### Logical Operators
 
 ```lento
-and    // Logical AND
-or     // Logical OR
-not    // Logical NOT
+  and    // Logical AND
+  or     // Logical OR
+  not    // Logical NOT
 ```
 
 #### Assignment Operators
 
 ```lento
-=      // Assignment
-+=     // Add and assign
--=     // Subtract and assign
-*=     // Multiply and assign
-/=     // Divide and assign
-%=     // Modulo and assign
+  =      // Assignment
+  +=     // Add and assign
+  -=     // Subtract and assign
+  *=     // Multiply and assign
+  /=     // Divide and assign
+  %=     // Modulo and assign
 ```
 
 ### Control Flow
@@ -117,30 +186,30 @@ not    // Logical NOT
 #### If Statements
 
 ```lento
-// Simple if
-if (x > 10) {
-    x = x + 1;  // x is 11 now
-}
+  // Simple if
+  if (x > 10) {
+      x = x + 1;  // x is 11 now
+  }
 
-// If-else
-if (x > 10) {
-    x = x * 2;  // x is doubled
-} else {
-    x = 5;      // x is 5 now
-}
+  // If-else
+  if (x > 10) {
+      x = x * 2;  // x is doubled
+  } else {
+      x = 5;      // x is 5 now
+  }
 
-// Else-if chains
-if (x > 100) {
-    x = 100;    // cap at 100
-} else if (x > 10) {
-    x = x + 5;  // add 5
-} else {
-    x = 0;      // reset to 0
-}
+  // Else-if chains
+  if (x > 100) {
+      x = 100;    // cap at 100
+  } else if (x > 10) {
+      x = x + 5;  // add 5
+  } else {
+      x = 0;      // reset to 0
+  }
 
-// Single-line syntax (parentheses optional with braces)
-if true { x = 42; }
-if (x > 0) x = x - 1;
+  // Single-line syntax (parentheses optional with braces)
+  if true { x = 42; }
+  if (x > 0) x = x - 1;
 ```
 
 ### Functions
@@ -150,55 +219,56 @@ if (x > 0) x = x - 1;
 Define functions using the `fn` keyword:
 
 ```lento
-fn recursivePrint(y) { // NOTE: `y` is a pass-by-value parameter
-  var z = y+1;         // Modifying it won't affect the argument
-  print(z);  b         // of the caller
-  recursivePrint(z);
-}
+  fn recursivePrint(y) { // NOTE: `y` is a pass-by-value parameter
+    var z = y+1;         // Modifying it won't affect the argument
+    print(z);  b         // of the caller
+    recursivePrint(z);
+  }
 ```
 
 Calling a function
+
 ```lento
-print("Hello, World!"); // Calls the `print` native function
-add(x, y);
+  print("Hello, World!"); // Calls the `print` native function
+  add(x, y);
 ```
 
 ## Examples
 
 ```lento
-// Variable declaration and manipulation
-var counter = 0;
-const maxValue = 100;
+  // Variable declaration and manipulation
+  var counter = 0;
+  const maxValue = 100;
 
-// Arithmetic operations
-var result = (10 + 5) * 2;  // result is 30
-var remainder = 17 % 5;      // remainder is 2
+  // Arithmetic operations
+  var result = (10 + 5) * 2;  // result is 30
+  var remainder = 17 % 5;      // remainder is 2
 
-// Logical operations
-var isValid = true and (counter < maxValue);
+  // Logical operations
+  var isValid = true and (counter < maxValue);
 
-// Comparison operations
-var isComplete = counter >= maxValue;
+  // Comparison operations
+  var isComplete = counter >= maxValue;
 
-// String manipulation
-var greeting = "Hello";
-greeting = greeting + ", World!";  // greeting is "Hello, World!" now
+  // String manipulation
+  var greeting = "Hello";
+  greeting = greeting + ", World!";  // greeting is "Hello, World!" now
 
-// Control flow
-if (counter < maxValue) {
-    counter = counter + 1;  // counter is 1 now
-}
+  // Control flow
+  if (counter < maxValue) {
+      counter = counter + 1;  // counter is 1 now
+  }
 
-// Functions
-fn printHelloWorld() { // Why not?
-  print("Hello, World!");
-}
+  // Functions
+  fn printHelloWorld() { // Why not?
+    print("Hello, World!");
+  }
 
-// Function with closures
-var x = 10;
-fn makeAdder() {
-    x;  // Captures x from outer scope
-}
+  // Function with closures
+  var x = 10;
+  fn makeAdder() {
+      x;  // Captures x from outer scope
+  }
 ```
 
 ## REPL

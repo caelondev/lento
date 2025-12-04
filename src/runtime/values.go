@@ -14,6 +14,7 @@ const (
 	NUMBER_VALUE ValueTypes = "number"
 	STRING_VALUE ValueTypes = "string"
 	ARRAY_VALUE ValueTypes = "array"
+	OBJECT_VALUE ValueTypes = "object"
 	FUNCTION_VALUE        ValueTypes = "function"
 	NATIVE_FUNCTION_VALUE ValueTypes = "native_function"
 )
@@ -46,6 +47,52 @@ func (a *ArrayValue) String() string {
 	result += "]"
 	return result
 }
+
+type ObjectPropertyValue struct {
+	Key string
+	Value RuntimeValue
+}
+
+type ObjectValue struct {
+	Properties []ObjectPropertyValue
+}
+
+func (n *ObjectValue) Type() ValueTypes {
+	return OBJECT_VALUE
+}
+
+func (n *ObjectValue) String() string {
+	return n.stringWithIndent(0)
+}
+
+func (n *ObjectValue) stringWithIndent(depth int) string {
+	if len(n.Properties) == 0 {
+		return "{}"
+	}
+
+	indent := ""
+	for range depth {
+		indent += "  "
+	}
+	nextIndent := indent + "  "
+
+	result := "{\n"
+	for _, prop := range n.Properties {
+		result += nextIndent + prop.Key + ": "
+		
+		// Handle nested objects with proper indentation
+		if obj, ok := prop.Value.(*ObjectValue); ok {
+			result += obj.stringWithIndent(depth + 1)
+		} else {
+			result += prop.Value.String()
+		}
+		
+		result += ",\n"
+	}
+	result += indent + "}"
+	return result
+}
+
 
 type NilValue struct{}
 
@@ -134,6 +181,12 @@ func NATIVE_FUNCTION(name string, call func([]RuntimeValue, Environment, *Interp
 	return &NativeFunctionValue{
 		Name: name,
 		Call: call,
+	}
+}
+
+func OBJECT(properties []ObjectPropertyValue) *ObjectValue {
+	return &ObjectValue{
+		Properties: properties,
 	}
 }
 

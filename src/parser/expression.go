@@ -206,3 +206,49 @@ func parseIndexExpression(p *parser, left ast.Expression, bp BindingPower) ast.E
 		Line:  p.line,
 	}
 }
+
+func parseObjectExpression(p *parser) ast.Expression {
+	var properties []ast.ObjectProperty
+
+	p.advance() // Eat LEFT_BRACE
+
+	if p.currentTokenType() != lexer.RIGHT_BRACE {
+		// Parse first property
+		key := p.expect(lexer.IDENTIFIER).Lexeme
+		p.expect(lexer.COLON)
+		value := parseExpression(p, DEFAULT_BP)
+
+		properties = append(properties, ast.ObjectProperty{
+			Key:   key,
+			Value: value,
+		})
+
+		// Parse remaining properties
+		for p.currentTokenType() != lexer.RIGHT_BRACE {
+			// Expect comma or close brace
+			p.expect(lexer.COMMA, lexer.RIGHT_BRACE)
+			
+			// If we got closing brace, we're done
+			if p.currentTokenType() == lexer.RIGHT_BRACE {
+				break
+			}
+			
+			// We got comma, parse next property
+			key := p.expect(lexer.IDENTIFIER).Lexeme
+			p.expect(lexer.COLON)
+			value := parseExpression(p, DEFAULT_BP)
+
+			properties = append(properties, ast.ObjectProperty{
+				Key:   key,
+				Value: value,
+			})
+		}
+	}
+
+	p.expect(lexer.RIGHT_BRACE)
+
+	return &ast.ObjectExpression{
+		Properties: properties,
+		Line:       p.line,
+	}
+}

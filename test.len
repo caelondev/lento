@@ -1,8 +1,11 @@
-var array = [10, 20, [[[["Hello"]]], "World"]];
+var object = {
+  name : "Jericho",
+  age: 15,
+  knownLanguages: ["Go", "JavaScript", "TypeScript"],
+  phone: {
+    isAndroid: true,
+    isUsingTermux: true,
+  },
+};
 
-print("Array before: ");
-print(array);
-array[0] = [["Hello"], "World!"];
-
-print("Array after: ");
-print(array);
+object["knownLanguages"];

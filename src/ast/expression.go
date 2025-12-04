@@ -98,3 +98,19 @@ func (i *IndexExpression) GetLine() uint {
 	return i.Line
 }
 
+type ObjectProperty struct {
+	Key string
+	Value Expression
+}
+
+type ObjectExpression struct {
+	Properties []ObjectProperty
+	Line uint
+}
+
+func (i *ObjectExpression) Expression() {}
+func (i *ObjectExpression) GetLine() uint {
+	return i.Line
+}
+
+
