@@ -57,7 +57,7 @@ Lento supports three core data types:
   [0, "Hello, World!", true, [x, [y]]]
 ```
 
-- Objext: List of key-value pair
+- Object: List of key-value pair
 
 ```lento
   {
