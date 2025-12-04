@@ -113,4 +113,14 @@ func (i *ObjectExpression) GetLine() uint {
 	return i.Line
 }
 
+type MemberExpression struct {
+	Object   Expression
+	Property string
+	Line     uint
+}
 
+func (m *MemberExpression) GetLine() uint {
+	return m.Line
+}
+
+func (m *MemberExpression) Expression() {}

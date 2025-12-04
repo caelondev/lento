@@ -4,72 +4,65 @@ A lightweight, tree-walk interpreter built with Go, designed for simplicity and 
 
 ## Overview
 
-Lento is a modern interpreter that provides a clean syntax for scripting and automation tasks. Built from the ground up in Go, it offers fast execution and a straightforward learning curve.
+Lento is a modern scripting language with clean syntax, perfect for automation tasks and learning language implementation. Built from scratch in Go, it offers fast execution with a straightforward learning curve.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Go version 1.25.4 or higher
+- Go 1.25.4 or higher
 
 ### Installation
-
-Install Lento using Go's package manager:
 
 ```bash
 go install github.com/caelondev/lento@latest
 ```
 
-## Language Reference
+## Language Guide
 
 ### Data Types
 
-Lento supports three core data types:
+Lento supports five core data types:
 
-- **Number**: Integer and floating-point values
-
-  ```lento
-  42
-  3.14
-  -17.5
-  ```
-
-- **Boolean**: Logical true/false values
-
-  ```lento
-  true
-  false
-  ```
-
-- **String**: Text enclosed in quotes (single, double, or backticks for multiline)
-
-  ```lento
-  "Hello, World!"
-  'Single quotes work too'
-  `Multiline
-  strings
-  supported`
-  ```
-
-- Arrays: 1D list of datas (can be string, number, boolean, and even another array)
-
+**Number** - Integers and floating-point values
 ```lento
-  [0, "Hello, World!", true, [x, [y]]]
+42
+3.14
+-17.5
 ```
 
-- Object: List of key-value pair
-
+**Boolean** - Logical true/false values
 ```lento
-  {
-    firstName: "Foo",
-    lastName: "Bar",
-    age: 22,
-  };
+true
+false
+```
+
+**String** - Text in quotes (single, double, or backticks for multiline)
+```lento
+"Hello, World!"
+'Single quotes work too'
+`Multiline
+strings
+supported`
+```
+
+**Array** - Ordered lists that can hold any type, including nested arrays
+```lento
+[1, 2, 3]
+["Apple", "Orange", "Banana"]
+[0, "Hello, World!", true, [x, [y]]]
+```
+
+**Object** - Key-value pairs for structured data
+```lento
+{
+  firstName: "Foo",
+  lastName: "Bar",
+  age: 22
+}
 ```
 
 ### Variables
-
-#### Declaration
 
 Declare variables using `var` for mutable values or `const` for immutable constants:
 
@@ -79,236 +72,255 @@ const baz = -10;
 var uninitialized;  // defaults to nil
 ```
 
-### Printing values
-
-Values can be printed in two ways (or more)
-
-#### Arrays
-
-You can print array values by either accessing the array index or printing the array itself
-
-```lento
-  print([]) // Prints an empty array
-
-  var fruits = ["Apple", "Orange", "Banana"]
-
-  print(fruits[0])        // Prints "Apple"
-  print(fruits)           // Prints the whole array
-  print([true, false][0]) // Prints `true` (not recommended to print arrays this way)
-```
-
-#### Objects
-
-Same as the array, Objects can also be printed by either printing it directly or accessing the key of the object
-
-```lento
-  var object = { 
-    name: "Bob",
-    age: 25,
-    location: {
-      street: "FooBar street",
-      continent: "Asia",
-    }
-  }
-  print({}); // Prints an empty object
-
-  print(object[name]);             // Prints "Bob"
-  print(object[location]);         // Prints the `location` object
-  print(object[location][street]); // Prints "FooBar street"
-```
-
-### Reassignment
-
-#### Variables
-
 Non-constant variables can be reassigned:
 
 ```lento
-  var foo = "Bar";
-  print(foo); // Outputs "Bar"
-  foo = "Hello, World!";
-  print(foo); // Outputs "Hello, World!"
+var foo = "Bar";
+print(foo);  // Outputs "Bar"
+
+foo = "Hello, World!";
+print(foo);  // Outputs "Hello, World!"
 ```
 
-#### Arrays
-Arrays can be reassigned by indexing a value and re-assigning a new value
-```lento
-  var bar = ["Foo", "Baz"];
-  bar[1] = "Bar";
+### Working with Arrays
 
-  print(bar[1]) // Outputs "Bar"
+You can print array values by either accessing a specific index or printing the entire array:
+
+```lento
+print([])  // Prints an empty array
+
+var fruits = ["Apple", "Orange", "Banana"]
+
+print(fruits[0])         // Prints "Apple"
+print(fruits)            // Prints the whole array
+print([true, false][0])  // Prints true (not recommended)
 ```
 
-#### Objects
-Objects are pretty much the same as the array, but you can use key index as the index parameter or use the dot operator (To be implemented)
+Arrays can be modified by reassigning values at specific indices:
 
 ```lento
-  var object = { 
-    name: "Bob",
-    age: 25,
-    location: {
-      street: "FooBar street",
-      continent: "Asia",
-    }
+var bar = ["Foo", "Baz"]
+bar[1] = "Bar"
+print(bar[1])  // Outputs "Bar"
+```
+
+### Working with Objects
+
+Objects can be printed directly or you can access specific properties using bracket notation or dot notation:
+
+```lento
+var person = { 
+  name: "Bob",
+  age: 25,
+  location: {
+    street: "FooBar street",
+    continent: "Asia"
   }
+}
 
-  print(object[location][continent]); // Prints "Asia"
+print({})  // Prints an empty object
 
-  object[location][continent] = "Europe":
+// Bracket notation
+print(person[name])              // Prints "Bob"
+print(person[location])          // Prints the location object
+print(person[location][street])  // Prints "FooBar street"
 
-  print(object[location][continent]); // Prints "Europe"
+// Dot notation
+print(person.name)               // Prints "Bob"
+print(person.location.continent) // Prints "Asia"
+```
 
+Objects can be modified using either bracket or dot notation:
+
+```lento
+// Bracket notation
+person[location][continent] = "Europe"
+
+// Dot notation
+person.location.continent = "Europe"
+
+print(person.location.continent)  // Prints "Europe"
 ```
 
 ### Operators
 
-#### Arithmetic Operators
-
+**Arithmetic**
 ```lento
-  +      // Addition
-  -      // Subtraction
-  *      // Multiplication
-  /      // Division
-  %      // Modulo
++      // Addition
+-      // Subtraction
+*      // Multiplication
+/      // Division
+%      // Modulo
 ```
 
-#### Comparison Operators
-
+**Comparison**
 ```lento
-  <      // Less than
-  <=     // Less than or equal to
-  >      // Greater than
-  >=     // Greater than or equal to
-  ==     // Equal to
-  !=     // Not equal to
+<      // Less than
+<=     // Less than or equal to
+>      // Greater than
+>=     // Greater than or equal to
+==     // Equal to
+!=     // Not equal to
 ```
 
-#### Logical Operators
-
+**Logical**
 ```lento
-  and    // Logical AND
-  or     // Logical OR
-  not    // Logical NOT
+and    // Logical AND
+or     // Logical OR
+not    // Logical NOT
 ```
 
-#### Assignment Operators
-
+**Assignment**
 ```lento
-  =      // Assignment
-  +=     // Add and assign
-  -=     // Subtract and assign
-  *=     // Multiply and assign
-  /=     // Divide and assign
-  %=     // Modulo and assign
+=      // Assignment
++=     // Add and assign
+-=     // Subtract and assign
+*=     // Multiply and assign
+/=     // Divide and assign
+%=     // Modulo and assign
 ```
 
 ### Control Flow
 
-#### If Statements
+Lento supports standard if-else statements with flexible syntax:
 
 ```lento
-  // Simple if
-  if (x > 10) {
-      x = x + 1;  // x is 11 now
-  }
+// Simple if
+if (x > 10) {
+  x = x + 1
+}
 
-  // If-else
-  if (x > 10) {
-      x = x * 2;  // x is doubled
-  } else {
-      x = 5;      // x is 5 now
-  }
+// If-else
+if (x > 10) {
+  x = x * 2
+} else {
+  x = 5
+}
 
-  // Else-if chains
-  if (x > 100) {
-      x = 100;    // cap at 100
-  } else if (x > 10) {
-      x = x + 5;  // add 5
-  } else {
-      x = 0;      // reset to 0
-  }
+// Else-if chains
+if (x > 100) {
+  x = 100
+} else if (x > 10) {
+  x = x + 5
+} else {
+  x = 0
+}
 
-  // Single-line syntax (parentheses optional with braces)
-  if true { x = 42; }
-  if (x > 0) x = x - 1;
+// Single-line syntax (parentheses optional with braces)
+if true { x = 42; }
+if (x > 0) x = x - 1;
 ```
 
 ### Functions
 
-#### Function Declaration
-
 Define functions using the `fn` keyword:
 
 ```lento
-  fn recursivePrint(y) { // NOTE: `y` is a pass-by-value parameter
-    var z = y+1;         // Modifying it won't affect the argument
-    print(z);  b         // of the caller
-    recursivePrint(z);
-  }
+fn greet(name) {
+  print("Hello, " + name + "!")
+}
+
+fn add(a, b) {
+  a + b  // Last expression is returned
+}
 ```
 
-Calling a function
+**Note**: Parameters are pass-by-value, so modifying them won't affect the original arguments.
+
+Functions support closures and capture their surrounding environment:
 
 ```lento
-  print("Hello, World!"); // Calls the `print` native function
-  add(x, y);
+var x = 10
+
+fn makeAdder() {
+  x  // Captures x from outer scope
+}
 ```
 
-## Examples
+Call functions like you'd expect:
 
 ```lento
-  // Variable declaration and manipulation
-  var counter = 0;
-  const maxValue = 100;
-
-  // Arithmetic operations
-  var result = (10 + 5) * 2;  // result is 30
-  var remainder = 17 % 5;      // remainder is 2
-
-  // Logical operations
-  var isValid = true and (counter < maxValue);
-
-  // Comparison operations
-  var isComplete = counter >= maxValue;
-
-  // String manipulation
-  var greeting = "Hello";
-  greeting = greeting + ", World!";  // greeting is "Hello, World!" now
-
-  // Control flow
-  if (counter < maxValue) {
-      counter = counter + 1;  // counter is 1 now
-  }
-
-  // Functions
-  fn printHelloWorld() { // Why not?
-    print("Hello, World!");
-  }
-
-  // Function with closures
-  var x = 10;
-  fn makeAdder() {
-      x;  // Captures x from outer scope
-  }
+print("Hello, World!")  // Built-in function
+greet("Alice")          // User-defined function
+var sum = add(5, 3)
 ```
 
-## REPL
+## Complete Example
 
-Lento includes an interactive REPL (Read-Eval-Print Loop) for quick experimentation:
+```lento
+// Variable declaration
+var counter = 0
+const maxValue = 100
+
+// Arithmetic operations
+var result = (10 + 5) * 2   // 30
+var remainder = 17 % 5       // 2
+
+// Logical operations
+var isValid = true and (counter < maxValue)
+
+// String manipulation
+var greeting = "Hello"
+greeting = greeting + ", World!"
+
+// Arrays and objects
+var scores = [95, 87, 92]
+var player = {
+  name: "Alice",
+  score: scores[0],
+  level: 5
+}
+
+// Control flow
+if (counter < maxValue) {
+  counter = counter + 1
+}
+
+// Functions with closures
+fn createCounter() {
+  var count = 0
+  
+  fn increment() {
+    count = count + 1
+    print(count)
+  }
+  
+  increment
+}
+
+var myCounter = createCounter()
+myCounter()  // Prints 1
+myCounter()  // Prints 2
+```
+
+## Interactive REPL
+
+Lento includes an interactive REPL for quick experimentation:
 
 ```bash
 $ lento
->> var x = 42;
+>> var x = 42
 42
->> x * 2;
+>> x * 2
 84
->> fn greet(name) name = "Hello, " + name;
+>> fn greet(name) "Hello, " + name
 [ greet function ]
+>> greet("World")
+Hello, World!
 ```
+
+Exit the REPL with `*exit` or Ctrl+C.
+
+## Performance
+
+Lento is designed for speed. Even as a tree-walk interpreter, it executes scripts in microseconds thanks to Go's efficient runtime.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests on the [Lento repository](https://github.com/caelondev/lento).
+Contributions are welcome! Feel free to:
+- Report bugs or request features via [issues](https://github.com/caelondev/lento/issues)
+- Submit pull requests with improvements
+- Share your Lento scripts and projects
 
 ## License
 

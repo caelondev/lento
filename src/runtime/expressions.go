@@ -33,6 +33,8 @@ func (i *Interpreter) EvaluateExpression(expr ast.Expression, env Environment) R
 		return i.evaluateIndexExpression(n, env)
 	case *ast.ObjectExpression:
 		return i.evaluateObjectExpression(n, env)
+	case *ast.MemberExpression:
+		return  i.evaluateMemberExoression(n, env)
 
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Expression whilst evaluating: %T\n", expr))
@@ -269,6 +271,34 @@ func (i *Interpreter) evaluateAssignmentExpression(expr *ast.AssignmentExpressio
 			errorhandler.ArrayIndexError,
 		)
 		return NIL()
+	case *ast.MemberExpression:
+		// Handle dot notation assignment
+		object := i.EvaluateExpression(assignee.Object, env)
+		
+		if objValue, ok := object.(*ObjectValue); ok {
+			// Search for existing key and update
+			for idx, prop := range objValue.Properties {
+				if prop.Key == assignee.Property {
+					objValue.Properties[idx].Value = value
+					return value
+				}
+			}
+			
+			// Key doesn't exist - add new property
+			objValue.Properties = append(objValue.Properties, ObjectPropertyValue{
+				Key:   assignee.Property,
+				Value: value,
+			})
+			return value
+		}
+		
+		i.errorHandler.ReportError(
+			"Interpreter-Member",
+			fmt.Sprintf("Cannot assign property to non-object type '%s'", object.Type()),
+			i.line,
+			errorhandler.MemberExpressionError,
+		)
+		return NIL()
 
 	default:
 		i.errorHandler.Report(i.line, "Invalid left-hand assignment")
@@ -365,5 +395,33 @@ func (i *Interpreter) evaluateIndexExpression(expr *ast.IndexExpression, env Env
 
 	i.errorHandler.Report(i.line, 
 		fmt.Sprintf("Cannot index type '%s'", target.Type()))
+	return NIL()
+}
+
+func (i *Interpreter) evaluateMemberExoression(expr *ast.MemberExpression, env Environment) RuntimeValue {
+	object := i.EvaluateExpression(expr.Object, env)
+
+	if obj, ok := object.(*ObjectValue); ok {
+		for _, property := range obj.Properties {
+			if property.Key == expr.Property {
+				return property.Value
+			}
+		}
+
+		i.errorHandler.ReportError(
+			"Interpreter-Member",
+			fmt.Sprintf("Cannot access property of an object as it is undefined (reading property '%s', type of %s)", expr.Property, object.Type()),
+			i.line,
+			errorhandler.MemberExpressionError,
+		)
+		return NIL()
+	}
+
+	i.errorHandler.ReportError(
+		"Interpreter-Member",
+		fmt.Sprintf("Cannot access property of non-object expression (type of %s)", object.Type()),
+		i.line,
+		errorhandler.MemberExpressionError,
+	)
 	return NIL()
 }

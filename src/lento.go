@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 
 	errorhandler "github.com/caelondev/lento/src/error-handler"
 	"github.com/caelondev/lento/src/lexer"
@@ -33,7 +34,11 @@ func runFile(filepath string) {
 		fmt.Printf("An error occurred whilst trying to read %s:\n%s\n", filepath, error.Error())
 	}
 
+	start := time.Now()
 	run(string(bytes))
+	duration := time.Since(start)
+
+	fmt.Printf("File took %s of execution time\n", duration)
 
 	if ErrorHandler.HadError {
 		os.Exit(1)

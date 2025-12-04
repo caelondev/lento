@@ -5,7 +5,7 @@ var obj = {
   }
 };
 
-print(obj);
-obj["name"] = "Alice";
-obj["info"]["birthYear"] = 2000;
-print(obj);
+print(obj.name);
+print(obj.info);
+obj.info.birthYear = 2000;
+print(obj.info);

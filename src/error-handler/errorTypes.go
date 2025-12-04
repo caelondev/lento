@@ -14,4 +14,5 @@ const (
 	NativeFunctionError ErrorType = "NATIVE_FUNCTION_ERR"
 	ArrayIndexError ErrorType = "ARRAY_INDEXING_ERR"
 	ObjectKeyError ErrorType = "OBJECT_KEY_ERR"
+	MemberExpressionError ErrorType = "MEMBER_EXPR_ERR"
 )

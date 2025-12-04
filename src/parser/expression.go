@@ -227,12 +227,12 @@ func parseObjectExpression(p *parser) ast.Expression {
 		for p.currentTokenType() != lexer.RIGHT_BRACE {
 			// Expect comma or close brace
 			p.expect(lexer.COMMA, lexer.RIGHT_BRACE)
-			
+
 			// If we got closing brace, we're done
 			if p.currentTokenType() == lexer.RIGHT_BRACE {
 				break
 			}
-			
+
 			// We got comma, parse next property
 			key := p.expect(lexer.IDENTIFIER).Lexeme
 			p.expect(lexer.COLON)
@@ -250,5 +250,16 @@ func parseObjectExpression(p *parser) ast.Expression {
 	return &ast.ObjectExpression{
 		Properties: properties,
 		Line:       p.line,
+	}
+}
+
+func parseMemberExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
+	p.advance() // eat '.' ---
+	property := p.expect(lexer.IDENTIFIER).Lexeme
+
+	return &ast.MemberExpression{
+		Object: left,
+		Property: property,
+		Line:   p.line,
 	}
 }
