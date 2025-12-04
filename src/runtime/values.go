@@ -23,6 +23,30 @@ type RuntimeValue interface {
 	String() string
 }
 
+type ArrayValue struct {
+	Elements []RuntimeValue
+}
+
+func (a *ArrayValue) Type() ValueTypes {
+	return ARRAY_VALUE
+}
+
+func (a *ArrayValue) String() string {
+	if len(a.Elements) == 0 {
+		return "[]"
+	}
+	
+	result := "["
+	for i, elem := range a.Elements {
+		if i > 0 {
+			result += ", "
+		}
+		result += elem.String()
+	}
+	result += "]"
+	return result
+}
+
 type NilValue struct{}
 
 func (n *NilValue) Type() ValueTypes {
@@ -113,3 +137,6 @@ func NATIVE_FUNCTION(name string, call func([]RuntimeValue, Environment, *Interp
 	}
 }
 
+func ARRAY(elements []RuntimeValue) *ArrayValue {
+	return &ArrayValue{Elements: elements}
+}

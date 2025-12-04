@@ -59,6 +59,10 @@ func createTokenLookups() {
 	nud(lexer.STRING, parsePrimaryExpression)
 	nud(lexer.LEFT_PARENTHESIS, parsePrimaryExpression)
 
+	// ARRAYS ---
+	nud(lexer.LEFT_BRACKET, parseArrayExpression)
+	led(lexer.LEFT_BRACKET, CALL, parseIndexExpression)
+
 	// ADDITIVE & MULTIPLICATIVE ---
 	led(lexer.PLUS, ADDITIVE, parseBinaryExpression)
 	led(lexer.MINUS, ADDITIVE, parseBinaryExpression)

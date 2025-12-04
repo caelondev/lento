@@ -30,13 +30,13 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 			p.line,
 			errorhandler.UnknownTokenError,
 		)
-		p.synchronize() // Skip to next safe point
+		p.synchronize() // Skip to next safe point ---
 		return nil
 	}
 
 	left := nudFunction(p)
 	if left == nil {
-		return nil // Propagate error
+		return nil // Propagate error ---
 	}
 
 	for !p.isEOF() && bindingPowerLU[p.currentTokenType()] > bp {
@@ -52,7 +52,7 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 				errorhandler.UnexpectedTokenError,
 			)
 			p.synchronize()
-			return left // Return what we have so far
+			return left // Return what we have so far ---
 		}
 
 		left = ledFunction(p, left, operatorBP)
@@ -103,8 +103,8 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 }
 
 func parseBinaryExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	operatorToken := p.advance()    // Eat operator
-	right := parseExpression(p, bp) // ← CHANGED: Use bp instead of DEFAULT_BP
+	operatorToken := p.advance() // Eat operator
+	right := parseExpression(p, bp)
 
 	return &ast.BinaryExpression{
 		Left:     left,
@@ -125,20 +125,84 @@ func parseUnaryExpression(p *parser) ast.Expression {
 }
 
 func parseAssignmentExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	if _, ok := left.(*ast.SymbolExpression); !ok {
-		p.errorHandler.Report(p.line, "Invalid left-hand assignment")
-
-		p.advance()
-		parseExpression(p, DEFAULT_BP)
-
-		return left
-	}
-
 	p.advance()
 	value := parseExpression(p, ASSIGNMENT-1)
 
 	return &ast.AssignmentExpression{
 		Assignee: left,
 		Value:    value,
+	}
+}
+
+func parseCallExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
+	p.advance() // Eat '(' ---
+
+	arguments := make([]ast.Expression, 0)
+
+	// Parse arguments (comma-separated expressions)
+	if p.currentTokenType() != lexer.RIGHT_PARENTHESIS {
+		// Parse first argument
+		arg := parseExpression(p, DEFAULT_BP)
+		if arg != nil {
+			arguments = append(arguments, arg)
+		}
+
+		// Parse remaining arguments
+		for p.currentTokenType() == lexer.COMMA {
+			p.advance() // eat comma
+			arg := parseExpression(p, DEFAULT_BP)
+			if arg != nil {
+				arguments = append(arguments, arg)
+			}
+		}
+	}
+
+	p.expect(lexer.RIGHT_PARENTHESIS)
+
+	return &ast.CallExpression{
+		Caller:    left,
+		Arguments: arguments,
+		Line:      p.line,
+	}
+}
+
+func parseArrayExpression(p *parser) ast.Expression {
+	var elements []ast.Expression
+
+	p.advance() // Eat LEFT_BRACKET token ---
+
+	if p.currentTokenType() != lexer.RIGHT_BRACKET {
+		element := parseExpression(p, DEFAULT_BP)
+		if element != nil {
+			elements = append(elements, element)
+		}
+
+		for p.currentTokenType() == lexer.COMMA {
+			p.advance() // Eat COMMA
+			element := parseExpression(p, DEFAULT_BP)
+			if element != nil {
+				elements = append(elements, element)
+			}
+		}
+	}
+
+	p.expect(lexer.RIGHT_BRACKET)
+
+	return &ast.ArrayExpression{
+		Elements: elements,
+		Line:     p.line,
+	}
+}
+
+func parseIndexExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
+	p.advance() // Eat LEFT_PARENTHESIS ---
+	index := parseExpression(p, DEFAULT_BP)
+
+	p.expect(lexer.RIGHT_BRACKET)
+
+	return &ast.IndexExpression{
+		Array: left,
+		Index: index,
+		Line:  p.line,
 	}
 }

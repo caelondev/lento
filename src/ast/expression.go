@@ -67,8 +67,8 @@ func (node *AssignmentExpression) GetLine() uint {
 }
 
 type CallExpression struct {
-	Caller    Expression   // The function being called (usually SymbolExpression)
-	Arguments []Expression // Arguments passed to the function
+	Caller    Expression
+	Arguments []Expression
 	Line      uint
 }
 
@@ -76,3 +76,25 @@ func (c *CallExpression) Expression() {}
 func (c *CallExpression) GetLine() uint {
 	return c.Line
 }
+
+type ArrayExpression struct {
+	Elements []Expression
+	Line     uint
+}
+
+func (a *ArrayExpression) Expression() {}
+func (a *ArrayExpression) GetLine() uint {
+	return a.Line
+}
+
+type IndexExpression struct {
+	Array Expression
+	Index  Expression
+	Line   uint
+}
+
+func (i *IndexExpression) Expression() {}
+func (i *IndexExpression) GetLine() uint {
+	return i.Line
+}
+

@@ -34,13 +34,17 @@ func NATIVE_LEN_FUNCTION(args []RuntimeValue, env Environment, i *Interpreter) R
 
 	arg := args[0]
 	switch arg.Type() {
-	case "string":
+	case STRING_VALUE:
 		strValue := arg.String()[1 : len(arg.String())-1]
 		return &NumberValue{Value: float64(len(strValue))}
+	case ARRAY_VALUE:
+		arr, _ := arg.(*ArrayValue)
+		return &NumberValue{Value: float64(len(arr.Elements))}
+
 	default:
 		i.errorHandler.ReportError(
 			"Interpreter-Native-Function",
-			"len() argument must be a string",
+			fmt.Sprintf("Could not use len() on unsupported argument type (%s)", arg.Type()),
 			i.line,
 			errorhandler.ArgumentLengthError,
 		)

@@ -184,35 +184,3 @@ func parseFunctionDeclaration(p *parser) ast.Statement {
 		Line:       p.line,
 	}
 }
-
-func parseCallExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	p.advance() // Eat '(' ---
-
-	arguments := make([]ast.Expression, 0)
-
-	// Parse arguments (comma-separated expressions)
-	if p.currentTokenType() != lexer.RIGHT_PARENTHESIS {
-		// Parse first argument
-		arg := parseExpression(p, DEFAULT_BP)
-		if arg != nil {
-			arguments = append(arguments, arg)
-		}
-
-		// Parse remaining arguments
-		for p.currentTokenType() == lexer.COMMA {
-			p.advance() // eat comma
-			arg := parseExpression(p, DEFAULT_BP)
-			if arg != nil {
-				arguments = append(arguments, arg)
-			}
-		}
-	}
-
-	p.expect(lexer.RIGHT_PARENTHESIS)
-
-	return &ast.CallExpression{
-		Caller:    left,
-		Arguments: arguments,
-		Line:      p.line,
-	}
-}

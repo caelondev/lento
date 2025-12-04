@@ -12,4 +12,5 @@ const (
 	InvalidArgumentError ErrorType = "INVALID_ARGUMENT_ERR"
 	NonFunctionExpressionError ErrorType = "NON_FUNCTION_EXPR_ERR"
 	NativeFunctionError ErrorType = "NATIVE_FUNCTION_ERR"
+	ArrayIndexError ErrorType = "ARRAY_INDEXING_ERR"
 )

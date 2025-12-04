@@ -17,6 +17,8 @@ func (i *Interpreter) EvaluateExpression(expr ast.Expression, env Environment) R
 		return evaluateNumberExpression(n)
 	case *ast.StringExpression:
 		return evaluateStringExpression(n)
+	case *ast.ArrayExpression:
+		return i.evaluateArrayExpression(n, env)
 	case *ast.BinaryExpression:
 		return i.evaluateBinaryExpression(n, env)
 	case *ast.UnaryExpression:
@@ -27,6 +29,9 @@ func (i *Interpreter) EvaluateExpression(expr ast.Expression, env Environment) R
 		return i.evaluateAssignmentExpression(n, env)
 	case *ast.CallExpression:
 		return i.evaluateCallExpression(n, env)
+	case *ast.IndexExpression:
+		return i.evaluateIndexExpression(n, env)
+
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Expression whilst evaluating: %T\n", expr))
 	}
@@ -45,6 +50,16 @@ func evaluateSymbolExpression(expr *ast.SymbolExpression, env Environment) Runti
 func evaluateStringExpression(expr *ast.StringExpression) RuntimeValue {
 	value := expr.Value[1 : len(expr.Value)-1]
 	return &StringValue{Value: value}
+}
+
+func (i *Interpreter) evaluateArrayExpression(expr *ast.ArrayExpression, env Environment) RuntimeValue {
+	var elements []RuntimeValue
+
+	for _, element := range expr.Elements {
+		elements = append(elements, i.EvaluateExpression(element, env))
+	}
+
+	return &ArrayValue{Elements: elements}
 }
 
 func (i *Interpreter) evaluateUnaryExpression(expr *ast.UnaryExpression, env Environment) RuntimeValue {
@@ -163,16 +178,57 @@ func (i *Interpreter) evaluateNumericBinaryExpression(left *NumberValue, right *
 }
 
 func (i *Interpreter) evaluateAssignmentExpression(expr *ast.AssignmentExpression, env Environment) RuntimeValue {
-	symbol, ok := expr.Assignee.(*ast.SymbolExpression)
-	if !ok {
+	value := i.EvaluateExpression(expr.Value, env)
+
+	switch assignee := expr.Assignee.(type) {
+	case *ast.SymbolExpression:
+		env.AssignVariable(i.line, assignee.Value, value)
+		return value
+
+	case *ast.IndexExpression:
+		array := i.EvaluateExpression(assignee.Array, env)
+		index := i.EvaluateExpression(assignee.Index, env)
+
+		arrayValue, isArray := array.(*ArrayValue)
+		if !isArray {
+			i.errorHandler.ReportError(
+				"Interpreter-Array",
+				fmt.Sprintf("Cannot index non-array type '%s'", array.Type()),
+				i.line,
+				errorhandler.ArrayIndexError,
+			)
+			return NIL()
+		}
+
+		indexValue, ok := index.(*NumberValue)
+		if !ok {
+			i.errorHandler.ReportError(
+				"Interpreter-Array",
+				fmt.Sprintf("Index must be a number, got '%s'", index.Type()),
+				i.line,
+				errorhandler.ArrayIndexError,
+			)
+			return NIL()
+		}
+
+		idx := int(indexValue.Value)
+		if idx < 0 || idx >= len(arrayValue.Elements) {
+			i.errorHandler.ReportError(
+				"Interpreter-Array",
+				fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)),
+				i.line,
+				errorhandler.ArrayIndexError,
+			)
+			return NIL()
+		}
+
+		arrayValue.Elements[idx] = value
+		return value
+
+	default:
 		i.errorHandler.Report(i.line, "Invalid left-hand assignment")
 		return NIL()
 	}
-
-	value := i.EvaluateExpression(expr.Value, env)
-	env.AssignVariable(i.line, symbol.Value, value)
-
-	return value
 }
 
 func (i *Interpreter) evaluateCallExpression(call *ast.CallExpression, env Environment) RuntimeValue {
@@ -219,5 +275,50 @@ func (i *Interpreter) evaluateCallExpression(call *ast.CallExpression, env Envir
 		i.line,
 		errorhandler.NonFunctionExpressionError,
 	)
+	return NIL()
+}
+
+func (i *Interpreter) evaluateIndexExpression(expr *ast.IndexExpression, env Environment) RuntimeValue {
+	array := i.EvaluateExpression(expr.Array, env)
+	index := i.EvaluateExpression(expr.Index, env)
+
+	arrayValue, isArray := array.(*ArrayValue)
+	if !isArray {
+		i.errorHandler.ReportError(
+			"Interpreter-Array",
+			fmt.Sprintf("Cannot index expression as it is not an array (type of '%s')", array.Type()),
+			i.line,
+			errorhandler.ArrayIndexError,
+		)
+		return NIL()
+	}
+
+	indexValue, ok := index.(*NumberValue)
+	if !ok {
+		i.errorHandler.ReportError(
+			"Interpreter-Array",
+			fmt.Sprintf("Invalid indexing value (type of %s)", array.Type()),
+			i.line,
+			errorhandler.ArrayIndexError,
+		)
+		return NIL()
+	}
+
+	if len(arrayValue.Elements) < int(indexValue.Value) {
+		i.errorHandler.ReportError(
+			"Interpreter-Array",
+			fmt.Sprintf("Index %d out of bounds as the array only got %d elements", int(indexValue.Value), len(arrayValue.Elements)),
+			i.line,
+			errorhandler.ArrayIndexError,
+		)
+		return NIL()
+	}
+
+	for idx, array := range arrayValue.Elements {
+		if idx == int(indexValue.Value) {
+			return array
+		}
+	}
+
 	return NIL()
 }
