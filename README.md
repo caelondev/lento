@@ -102,7 +102,7 @@ You can print array values by either accessing the array index or printing the a
 Same as the array, Objects can also be printed by either printing it directly or accessing the key of the object
 
 ```lento
-  var object = {
+  var object = { 
     name: "Bob",
     age: 25,
     location: {
@@ -110,11 +110,11 @@ Same as the array, Objects can also be printed by either printing it directly or
       continent: "Asia",
     }
   }
-  print({}) // Prints an empty object
+  print({}); // Prints an empty object
 
-  print(object[name])             // Prints "Bob"
-  print(object[location])         // Prints the `location` object
-  print(object[location][street]) // Prints "FooBar street"
+  print(object[name]);             // Prints "Bob"
+  print(object[location]);         // Prints the `location` object
+  print(object[location][street]); // Prints "FooBar street"
 ```
 
 ### Reassignment
@@ -131,12 +131,33 @@ Non-constant variables can be reassigned:
 ```
 
 #### Arrays
-
+Arrays can be reassigned by indexing a value and re-assigning a new value
 ```lento
   var bar = ["Foo", "Baz"];
   bar[1] = "Bar";
 
   print(bar[1]) // Outputs "Bar"
+```
+
+#### Objects
+Objects are pretty much the same as the array, but you can use key index as the index parameter or use the dot operator (To be implemented)
+
+```lento
+  var object = { 
+    name: "Bob",
+    age: 25,
+    location: {
+      street: "FooBar street",
+      continent: "Asia",
+    }
+  }
+
+  print(object[location][continent]); // Prints "Asia"
+
+  object[location][continent] = "Europe":
+
+  print(object[location][continent]); // Prints "Europe"
+
 ```
 
 ### Operators

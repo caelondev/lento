@@ -202,44 +202,73 @@ func (i *Interpreter) evaluateAssignmentExpression(expr *ast.AssignmentExpressio
 		return value
 
 	case *ast.IndexExpression:
-		array := i.EvaluateExpression(assignee.Array, env)
+		target := i.EvaluateExpression(assignee.Array, env)
 		index := i.EvaluateExpression(assignee.Index, env)
 
-		arrayValue, isArray := array.(*ArrayValue)
-		if !isArray {
-			i.errorHandler.ReportError(
-				"Interpreter-Array",
-				fmt.Sprintf("Cannot index non-array type '%s'", array.Type()),
-				i.line,
-				errorhandler.ArrayIndexError,
-			)
-			return NIL()
+		// Handle array assignment
+		if arrayValue, ok := target.(*ArrayValue); ok {
+			indexValue, ok := index.(*NumberValue)
+			if !ok {
+				i.errorHandler.ReportError(
+					"Interpreter-Array",
+					fmt.Sprintf("Array index must be a number, got '%s'", index.Type()),
+					i.line,
+					errorhandler.ArrayIndexError,
+				)
+				return NIL()
+			}
+
+			idx := int(indexValue.Value)
+			if idx < 0 || idx >= len(arrayValue.Elements) {
+				i.errorHandler.ReportError(
+					"Interpreter-Array",
+					fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)),
+					i.line,
+					errorhandler.ArrayIndexError,
+				)
+				return NIL()
+			}
+
+			arrayValue.Elements[idx] = value
+			return value
 		}
 
-		indexValue, ok := index.(*NumberValue)
-		if !ok {
-			i.errorHandler.ReportError(
-				"Interpreter-Array",
-				fmt.Sprintf("Index must be a number, got '%s'", index.Type()),
-				i.line,
-				errorhandler.ArrayIndexError,
-			)
-			return NIL()
+		// Handle object assignment
+		if objValue, ok := target.(*ObjectValue); ok {
+			keyValue, ok := index.(*StringValue)
+			if !ok {
+				i.errorHandler.ReportError(
+					"Interpreter-Object",
+					fmt.Sprintf("Object key must be a string, got '%s'", index.Type()),
+					i.line,
+					errorhandler.ObjectKeyError,
+				)
+				return NIL()
+			}
+
+			// Search for existing key and update
+			for idx, prop := range objValue.Properties {
+				if prop.Key == keyValue.Value {
+					objValue.Properties[idx].Value = value
+					return value
+				}
+			}
+
+			// Key doesn't exist - add new property
+			objValue.Properties = append(objValue.Properties, ObjectPropertyValue{
+				Key:   keyValue.Value,
+				Value: value,
+			})
+			return value
 		}
 
-		idx := int(indexValue.Value)
-		if idx < 0 || idx >= len(arrayValue.Elements) {
-			i.errorHandler.ReportError(
-				"Interpreter-Array",
-				fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)),
-				i.line,
-				errorhandler.ArrayIndexError,
-			)
-			return NIL()
-		}
-
-		arrayValue.Elements[idx] = value
-		return value
+		i.errorHandler.ReportError(
+			"Interpreter-Assignment",
+			fmt.Sprintf("Cannot index type '%s' for assignment", target.Type()),
+			i.line,
+			errorhandler.ArrayIndexError,
+		)
+		return NIL()
 
 	default:
 		i.errorHandler.Report(i.line, "Invalid left-hand assignment")

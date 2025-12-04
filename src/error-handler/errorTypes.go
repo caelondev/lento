@@ -13,4 +13,5 @@ const (
 	NonFunctionExpressionError ErrorType = "NON_FUNCTION_EXPR_ERR"
 	NativeFunctionError ErrorType = "NATIVE_FUNCTION_ERR"
 	ArrayIndexError ErrorType = "ARRAY_INDEXING_ERR"
+	ObjectKeyError ErrorType = "OBJECT_KEY_ERR"
 )

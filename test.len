@@ -1,11 +1,11 @@
-var object = {
-  name : "Jericho",
-  age: 15,
-  knownLanguages: ["Go", "JavaScript", "TypeScript"],
-  phone: {
-    isAndroid: true,
-    isUsingTermux: true,
-  },
+var obj = {
+  name: "Bob",
+  info: {
+    birthYear: 2003
+  }
 };
 
-object["knownLanguages"];
+print(obj);
+obj["name"] = "Alice";
+obj["info"]["birthYear"] = 2000;
+print(obj);
