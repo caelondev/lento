@@ -125,10 +125,11 @@ func parseUnaryExpression(p *parser) ast.Expression {
 }
 
 func parseAssignmentExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
-	p.advance()
+	operator := p.advance().TokenType
 	value := parseExpression(p, ASSIGNMENT-1)
 
 	return &ast.AssignmentExpression{
+		Operator: operator,
 		Assignee: left,
 		Value:    value,
 	}
@@ -178,7 +179,8 @@ func parseArrayExpression(p *parser) ast.Expression {
 		}
 
 		for p.currentTokenType() == lexer.COMMA {
-			p.advance() // Eat COMMA
+			p.advance() // Eat COMMA ---
+
 			element := parseExpression(p, DEFAULT_BP)
 			if element != nil {
 				elements = append(elements, element)
@@ -258,8 +260,8 @@ func parseMemberExpression(p *parser, left ast.Expression, bp BindingPower) ast.
 	property := p.expect(lexer.IDENTIFIER).Lexeme
 
 	return &ast.MemberExpression{
-		Object: left,
+		Object:   left,
 		Property: property,
-		Line:   p.line,
+		Line:     p.line,
 	}
 }

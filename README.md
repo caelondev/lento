@@ -262,6 +262,16 @@ while (x < 100) { // This loops over-and-over again until
 print(x) // Outputs 100
 ```
 
+#### For loops
+
+If you're familliar with the C language, the syntax for declaring a for-loop is the same
+
+```lento
+for (var x = 0; x < 10; x+=1) {
+  print(x) // Outputs 0-9
+}
+```
+
 ## Interactive REPL
 
 Lento includes an interactive REPL for quick experimentation:

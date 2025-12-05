@@ -23,7 +23,7 @@ func (node *ExpressionStatement) GetLine() uint {
 type VariableDeclarationStatement struct {
 	IsConstant bool
 	Identifier string
-	Value Expression
+	Value      Expression
 	Line       uint
 }
 
@@ -58,9 +58,9 @@ func (f *FunctionDeclarationStatement) GetLine() uint {
 }
 
 type WhileLoopStatement struct {
-	Condition  Expression
-	Body       Statement
-	Line       uint
+	Condition Expression
+	Body      Statement
+	Line      uint
 }
 
 func (w *WhileLoopStatement) Statement() {}
@@ -68,3 +68,15 @@ func (w *WhileLoopStatement) GetLine() uint {
 	return w.Line
 }
 
+type ForStatement struct {
+	Init      Statement  // Initialization (e.g., var x = 0)
+	Condition Expression // Loop condition (e.g., x < 10)
+	Increment Expression  // Increment statement (e.g., x++)
+	Body      Statement  // Usually a BlockStatement
+	Line      uint
+}
+
+func (f *ForStatement) Statement() {}
+func (f *ForStatement) GetLine() uint {
+	return f.Line
+}

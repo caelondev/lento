@@ -22,6 +22,8 @@ func (i *Interpreter) EvaluateStatement(stmt ast.Statement, env Environment) Run
 		return evaluateFunctionDeclaration(n, env)
 	case *ast.WhileLoopStatement:
 		return i.evaluateWhileLoopStatement(n, env)
+	case *ast.ForStatement:
+		return i.evaluateForStatement(n, env)
 
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Statement whilst evaluating: %T\n", stmt))
@@ -94,5 +96,25 @@ func (i *Interpreter) evaluateWhileLoopStatement(stmt *ast.WhileLoopStatement, e
 		i.EvaluateStatement(stmt.Body, env)
 		condition = i.EvaluateExpression(stmt.Condition, env)
 	}
+	return NIL()
+}
+
+func (i *Interpreter) evaluateForStatement(stmt *ast.ForStatement, env Environment) RuntimeValue {
+	forScope := NewEnvironment(env, i.errorHandler)
+
+	i.EvaluateStatement(stmt.Init, forScope)
+
+	for {
+		if stmt.Condition != nil {
+			condition := i.EvaluateExpression(stmt.Condition, forScope)
+			if !isTruthy(condition) {
+				break
+			}
+		}
+
+		i.EvaluateStatement(stmt.Body, forScope)
+		i.EvaluateExpression(stmt.Increment, forScope)
+	}
+
 	return NIL()
 }

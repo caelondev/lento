@@ -65,6 +65,9 @@ func createTokenLookups() {
 	nud(lexer.LEFT_BRACKET, parseArrayExpression)
 	led(lexer.LEFT_BRACKET, CALL, parseIndexExpression)
 
+	// COMPOUND OPERATORS ---
+	led(lexer.PLUS_EQUALS, ASSIGNMENT, parseAssignmentExpression)
+
 	// ADDITIVE & MULTIPLICATIVE ---
 	led(lexer.PLUS, ADDITIVE, parseBinaryExpression)
 	led(lexer.MINUS, ADDITIVE, parseBinaryExpression)
@@ -79,6 +82,7 @@ func createTokenLookups() {
 	statement(lexer.IF, parseIfStatement)
 	statement(lexer.FUNCTION, parseFunctionDeclaration)
 	statement(lexer.WHILE, parseWhileStatement)
+	statement(lexer.FOR, parseForStatement)
 
 	// CALL EXPRESSION ---
 	led(lexer.LEFT_PARENTHESIS, CALL, parseCallExpression)

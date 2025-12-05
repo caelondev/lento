@@ -107,11 +107,11 @@ func parseIfStatement(p *parser) ast.Statement {
 	var consequent ast.Statement // If block ---
 	var alternate ast.Statement  // else block
 
-	p.advance() // Eat 'if' ---
+	p.expect(lexer.IF)
 
-	p.ignore(lexer.LEFT_PARENTHESIS)
+	p.expect(lexer.LEFT_PARENTHESIS)
 	condition = parseExpression(p, DEFAULT_BP)
-	p.ignore(lexer.RIGHT_PARENTHESIS)
+	p.expect(lexer.RIGHT_PARENTHESIS)
 
 	if p.currentTokenType() == lexer.LEFT_BRACE {
 		p.advance() // Eat brace ---
@@ -150,7 +150,8 @@ func parseFunctionDeclaration(p *parser) ast.Statement {
 	var parameters []string
 	var body ast.Statement
 
-	p.advance() // Eat past FUNCTION token ---
+	p.expect(lexer.FUNCTION)
+
 	identifier = p.expect(lexer.IDENTIFIER).Lexeme
 
 	p.expect(lexer.LEFT_PARENTHESIS)
@@ -194,7 +195,7 @@ func parseWhileStatement(p *parser) ast.Statement {
 	var condition ast.Expression
 	var body ast.Statement
 
-	p.advance() // Eat WHILE token ---
+	p.expect(lexer.WHILE)
 
 	// Optional parentheses around condition
 	if p.currentTokenType() == lexer.LEFT_PARENTHESIS {
@@ -216,6 +217,60 @@ func parseWhileStatement(p *parser) ast.Statement {
 
 	return &ast.WhileLoopStatement{
 		Condition: condition,
+		Body:      body,
+		Line:      p.line,
+	}
+}
+
+func parseForStatement(p *parser) ast.Statement {
+	// SYNTAX ---
+	//
+	// for (var x = 0; x<10; x++) { ... }
+	// for (var x = 0; x<10; x++) ...
+	//
+	// INFINITE LOOP ---
+	// for (;;) { ... }
+	// for (;;) ...
+	//
+
+	var init ast.Statement
+	var condition ast.Expression
+	var increment ast.Expression
+	var body ast.Statement
+
+	p.expect(lexer.FOR)
+
+	p.expect(lexer.LEFT_PARENTHESIS)
+
+	if p.currentTokenType() != lexer.VARIABLE {
+		p.errorHandler.ReportError(
+			"Parser-For",
+			fmt.Sprintf("Expected a non-constant variable declaration, got %s instead", lexer.TokenTypeString[p.currentTokenType()]),
+			p.line,
+			errorhandler.VariableDeclarationError,
+		)
+		return nil
+	}
+
+	init = parseVariableDeclaration(p) // Already requires ';' ---
+
+	condition = parseExpression(p, DEFAULT_BP)
+	p.expect(lexer.SEMICOLON)
+
+	increment = parseExpression(p, DEFAULT_BP)
+	p.expect(lexer.RIGHT_PARENTHESIS)
+
+	if p.currentTokenType() == lexer.LEFT_BRACE {
+		p.advance()
+		body = parseBlockStatement(p)
+	} else {
+		body = parseStatement(p)
+	}
+
+	return &ast.ForStatement{
+		Init:      init,
+		Condition: condition,
+		Increment: increment,
 		Body:      body,
 		Line:      p.line,
 	}

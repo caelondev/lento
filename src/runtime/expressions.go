@@ -197,112 +197,208 @@ func (i *Interpreter) evaluateNumericBinaryExpression(left *NumberValue, right *
 }
 
 func (i *Interpreter) evaluateAssignmentExpression(expr *ast.AssignmentExpression, env Environment) RuntimeValue {
+	operator := expr.Operator
 	value := i.EvaluateExpression(expr.Value, env)
 
 	switch assignee := expr.Assignee.(type) {
 	case *ast.SymbolExpression:
-		env.AssignVariable(i.line, assignee.Value, value)
-		return value
-
+		return i.assignToSymbol(assignee, value, operator, env)
 	case *ast.IndexExpression:
-		target := i.EvaluateExpression(assignee.Array, env)
-		index := i.EvaluateExpression(assignee.Index, env)
+		return i.assignToIndex(assignee, value, operator, env)
+	case *ast.MemberExpression:
+		return i.assignToMember(assignee, value, operator, env)
+	default:
+		i.errorHandler.Report(i.line, "Invalid left-hand assignment")
+		return NIL()
+	}
+}
 
-		// Handle array assignment
-		if arrayValue, ok := target.(*ArrayValue); ok {
-			indexValue, ok := index.(*NumberValue)
-			if !ok {
-				i.errorHandler.ReportError(
-					"Interpreter-Array",
-					fmt.Sprintf("Array index must be a number, got '%s'", index.Type()),
-					i.line,
-					errorhandler.ArrayIndexError,
-				)
-				return NIL()
-			}
+func (i *Interpreter) assignToSymbol(assignee *ast.SymbolExpression, value RuntimeValue, operator lexer.TokenType, env Environment) RuntimeValue {
+	finalValue := i.computeAssignmentValue(assignee.Value, value, operator, env)
+	env.AssignVariable(i.line, assignee.Value, finalValue)
+	return finalValue
+}
 
-			idx := int(indexValue.Value)
-			if idx < 0 || idx >= len(arrayValue.Elements) {
-				i.errorHandler.ReportError(
-					"Interpreter-Array",
-					fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)),
-					i.line,
-					errorhandler.ArrayIndexError,
-				)
-				return NIL()
-			}
+func (i *Interpreter) assignToIndex(assignee *ast.IndexExpression, value RuntimeValue, operator lexer.TokenType, env Environment) RuntimeValue {
+	target := i.EvaluateExpression(assignee.Array, env)
+	index := i.EvaluateExpression(assignee.Index, env)
 
-			arrayValue.Elements[idx] = value
-			return value
-		}
+	// Handle array assignment
+	if arrayValue, ok := target.(*ArrayValue); ok {
+		return i.assignToArrayIndex(arrayValue, index, value, operator)
+	}
 
-		// Handle object assignment
-		if objValue, ok := target.(*ObjectValue); ok {
-			keyValue, ok := index.(*StringValue)
-			if !ok {
-				i.errorHandler.ReportError(
-					"Interpreter-Object",
-					fmt.Sprintf("Object key must be a string, got '%s'", index.Type()),
-					i.line,
-					errorhandler.ObjectKeyError,
-				)
-				return NIL()
-			}
+	// Handle object assignment
+	if objValue, ok := target.(*ObjectValue); ok {
+		return i.assignToObjectKey(objValue, index, value, operator)
+	}
 
-			// Search for existing key and update
-			for idx, prop := range objValue.Properties {
-				if prop.Key == keyValue.Value {
-					objValue.Properties[idx].Value = value
-					return value
-				}
-			}
+	i.errorHandler.ReportError(
+		"Interpreter-Assignment",
+		fmt.Sprintf("Cannot index type '%s' for assignment", target.Type()),
+		i.line,
+		errorhandler.ArrayIndexError,
+	)
+	return NIL()
+}
 
-			// Key doesn't exist - add new property
-			objValue.Properties = append(objValue.Properties, ObjectPropertyValue{
-				Key:   keyValue.Value,
-				Value: value,
-			})
-			return value
-		}
+func (i *Interpreter) assignToMember(assignee *ast.MemberExpression, value RuntimeValue, operator lexer.TokenType, env Environment) RuntimeValue {
+	object := i.EvaluateExpression(assignee.Object, env)
+	
+	if objValue, ok := object.(*ObjectValue); ok {
+		return i.assignToObjectProperty(objValue, assignee.Property, value, operator)
+	}
+	
+	i.errorHandler.ReportError(
+		"Interpreter-Member",
+		fmt.Sprintf("Cannot assign property to non-object type '%s'", object.Type()),
+		i.line,
+		errorhandler.MemberExpressionError,
+	)
+	return NIL()
+}
 
+func (i *Interpreter) assignToArrayIndex(arrayValue *ArrayValue, index RuntimeValue, value RuntimeValue, operator lexer.TokenType) RuntimeValue {
+	indexValue, ok := index.(*NumberValue)
+	if !ok {
 		i.errorHandler.ReportError(
-			"Interpreter-Assignment",
-			fmt.Sprintf("Cannot index type '%s' for assignment", target.Type()),
+			"Interpreter-Array",
+			fmt.Sprintf("Array index must be a number, got '%s'", index.Type()),
 			i.line,
 			errorhandler.ArrayIndexError,
 		)
 		return NIL()
-	case *ast.MemberExpression:
-		// Handle dot notation assignment
-		object := i.EvaluateExpression(assignee.Object, env)
-		
-		if objValue, ok := object.(*ObjectValue); ok {
-			// Search for existing key and update
-			for idx, prop := range objValue.Properties {
-				if prop.Key == assignee.Property {
-					objValue.Properties[idx].Value = value
-					return value
-				}
-			}
-			
-			// Key doesn't exist - add new property
-			objValue.Properties = append(objValue.Properties, ObjectPropertyValue{
-				Key:   assignee.Property,
-				Value: value,
-			})
-			return value
-		}
-		
+	}
+
+	idx := int(indexValue.Value)
+	if idx < 0 || idx >= len(arrayValue.Elements) {
 		i.errorHandler.ReportError(
-			"Interpreter-Member",
-			fmt.Sprintf("Cannot assign property to non-object type '%s'", object.Type()),
+			"Interpreter-Array",
+			fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)),
 			i.line,
-			errorhandler.MemberExpressionError,
+			errorhandler.ArrayIndexError,
 		)
 		return NIL()
+	}
 
+	// Get current value for compound assignments
+	currentValue := arrayValue.Elements[idx]
+	finalValue := i.applyCompoundOperator(currentValue, value, operator)
+	
+	arrayValue.Elements[idx] = finalValue
+	return finalValue
+}
+
+func (i *Interpreter) assignToObjectKey(objValue *ObjectValue, index RuntimeValue, value RuntimeValue, operator lexer.TokenType) RuntimeValue {
+	keyValue, ok := index.(*StringValue)
+	if !ok {
+		i.errorHandler.ReportError(
+			"Interpreter-Object",
+			fmt.Sprintf("Object key must be a string, got '%s'", index.Type()),
+			i.line,
+			errorhandler.ObjectKeyError,
+		)
+		return NIL()
+	}
+
+	// Search for existing key
+	for idx, prop := range objValue.Properties {
+		if prop.Key == keyValue.Value {
+			currentValue := prop.Value
+			finalValue := i.applyCompoundOperator(currentValue, value, operator)
+			objValue.Properties[idx].Value = finalValue
+			return finalValue
+		}
+	}
+
+	// Key doesn't exist - only allow = operator for new properties
+	if operator != lexer.ASSIGNMENT {
+		i.errorHandler.Report(i.line, 
+			fmt.Sprintf("Cannot use compound assignment on undefined property '%s'", keyValue.Value))
+		return NIL()
+	}
+
+	// Add new property
+	objValue.Properties = append(objValue.Properties, ObjectPropertyValue{
+		Key:   keyValue.Value,
+		Value: value,
+	})
+	return value
+}
+
+func (i *Interpreter) assignToObjectProperty(objValue *ObjectValue, property string, value RuntimeValue, operator lexer.TokenType) RuntimeValue {
+	// Search for existing property
+	for idx, prop := range objValue.Properties {
+		if prop.Key == property {
+			currentValue := prop.Value
+			finalValue := i.applyCompoundOperator(currentValue, value, operator)
+			objValue.Properties[idx].Value = finalValue
+			return finalValue
+		}
+	}
+
+	// Property doesn't exist - only allow = operator for new properties
+	if operator != lexer.ASSIGNMENT {
+		i.errorHandler.Report(i.line, 
+			fmt.Sprintf("Cannot use compound assignment on undefined property '%s'", property))
+		return NIL()
+	}
+
+	// Add new property
+	objValue.Properties = append(objValue.Properties, ObjectPropertyValue{
+		Key:   property,
+		Value: value,
+	})
+	return value
+}
+
+func (i *Interpreter) computeAssignmentValue(varName string, value RuntimeValue, operator lexer.TokenType, env Environment) RuntimeValue {
+	if operator == lexer.ASSIGNMENT {
+		return value
+	}
+
+	// For compound assignments, get current value
+	currentValue := env.LookupVariable(i.line, varName)
+	return i.applyCompoundOperator(currentValue, value, operator)
+}
+
+func (i *Interpreter) applyCompoundOperator(currentValue RuntimeValue, value RuntimeValue, operator lexer.TokenType) RuntimeValue {
+	if operator == lexer.ASSIGNMENT {
+		return value
+	}
+
+	// Handle compound assignments
+	leftNum, leftIsNum := currentValue.(*NumberValue)
+	rightNum, rightIsNum := value.(*NumberValue)
+
+	if !leftIsNum || !rightIsNum {
+		i.errorHandler.Report(i.line, 
+			"Compound assignment requires numeric operands")
+		return NIL()
+	}
+
+	switch operator {
+	case lexer.PLUS_EQUALS:
+		return &NumberValue{Value: leftNum.Value + rightNum.Value}
+	case lexer.MINUS_EQUALS:
+		return &NumberValue{Value: leftNum.Value - rightNum.Value}
+	case lexer.STAR_EQUALS:
+		return &NumberValue{Value: leftNum.Value * rightNum.Value}
+	case lexer.SLASH_EQUALS:
+		if rightNum.Value == 0 {
+			i.errorHandler.Report(i.line, "Division by zero")
+			return NIL()
+		}
+		return &NumberValue{Value: leftNum.Value / rightNum.Value}
+	case lexer.MODULO_EQUALS:
+		if rightNum.Value == 0 {
+			i.errorHandler.Report(i.line, "Modulo by zero")
+			return NIL()
+		}
+		return &NumberValue{Value: math.Mod(leftNum.Value, rightNum.Value)}
 	default:
-		i.errorHandler.Report(i.line, "Invalid left-hand assignment")
+		i.errorHandler.Report(i.line, 
+			"Unsupported assignment operator")
 		return NIL()
 	}
 }

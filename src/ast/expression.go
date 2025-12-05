@@ -56,6 +56,7 @@ func (node *UnaryExpression) GetLine() uint {
 }
 
 type AssignmentExpression struct {
+	Operator lexer.TokenType
 	Assignee Expression
 	Value    Expression
 	Line     uint

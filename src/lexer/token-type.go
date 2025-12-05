@@ -56,6 +56,9 @@ const (
 	AND
 	FUNCTION
 	WHILE
+	FOR
+	RANGE
+	OF
 )
 
 var RESERVED_KEYWORDS = map[string]TokenType{
@@ -68,6 +71,9 @@ var RESERVED_KEYWORDS = map[string]TokenType{
 	"else":  ELSE,
 	"fn":    FUNCTION,
 	"while": WHILE,
+	"for": FOR,
+	"range": RANGE,
+	"of": OF,
 }
 
 var TokenTypeString = map[TokenType]string{
@@ -101,6 +107,9 @@ var TokenTypeString = map[TokenType]string{
 	IF:  "IF",
 	FUNCTION:  "FUNCTION",
 	WHILE: "WHILE",
+	FOR: "FOR",
+	RANGE: "RANGE",
+	OF: "OF",
 
 	LESS:          "LESS",
 	LESS_EQUAL:    "LESS_EQUAL",

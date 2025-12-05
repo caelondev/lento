@@ -15,4 +15,5 @@ const (
 	ArrayIndexError ErrorType = "ARRAY_INDEXING_ERR"
 	ObjectKeyError ErrorType = "OBJECT_KEY_ERR"
 	MemberExpressionError ErrorType = "MEMBER_EXPR_ERR"
+	VariableDeclarationError ErrorType = "VARIABLE_DECL_ERR"
 )

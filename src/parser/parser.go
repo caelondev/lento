@@ -108,11 +108,3 @@ func (p *parser) synchronize() {
 		p.advance()
 	}
 }
-
-func (p *parser) ignore(tokenType lexer.TokenType) *lexer.Token {
-	if p.currentTokenType() == tokenType {
-		return p.advance()
-	}
-
-	return nil
-}
