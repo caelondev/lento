@@ -20,6 +20,9 @@ func (i *Interpreter) EvaluateStatement(stmt ast.Statement, env Environment) Run
 		return i.evaluateIfStatement(n, env)
 	case *ast.FunctionDeclarationStatement:
 		return evaluateFunctionDeclaration(n, env)
+	case *ast.WhileLoopStatement:
+		return i.evaluateWhileLoopStatement(n, env)
+
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Statement whilst evaluating: %T\n", stmt))
 	}
@@ -30,6 +33,14 @@ func (i *Interpreter) EvaluateStatement(stmt ast.Statement, env Environment) Run
 func (i *Interpreter) evaluateBlockStatement(block *ast.BlockStatement, env Environment) RuntimeValue {
 	// Create new scope
 	blockScope := NewEnvironment(env, i.errorHandler)
+
+	// THIS CODE IS FOR DEBUGGING PURPOSES,UNCOMMENT THIS TO PRINT EVERY ENV CREATED IN REAL TIME ---
+	//
+	// if envStruct, ok := blockScope.(*EnvironmentStruct); ok {
+	// 	fmt.Println("\n=== ENTERING BLOCK SCOPE ===")
+	// 	envStruct.Debug(0)
+	// 	fmt.Println("============================")
+	// }
 
 	var lastEvaluated RuntimeValue = NIL()
 	for _, statement := range block.Body {
@@ -51,16 +62,17 @@ func evaluateVariableDeclarationStatement(decl *ast.VariableDeclarationStatement
 }
 
 func (i *Interpreter) evaluateIfStatement(stmt *ast.IfStatement, env Environment) RuntimeValue {
-	condition := i.EvaluateExpression(stmt.Condition, env)
-
-	if isTruthy(condition) {
-		i.EvaluateStatement(stmt.Consequent, env)
-	} else {
-		i.EvaluateStatement(stmt.Alternate, env)
-	}
-
-	return NIL()
+    condition := i.EvaluateExpression(stmt.Condition, env)
+    if isTruthy(condition) {
+        if stmt.Consequent != nil {
+            return i.EvaluateStatement(stmt.Consequent,env)
+        }
+    } else if stmt.Alternate != nil {
+        return i.EvaluateStatement(stmt.Alternate, env)
+    }
+    return nil
 }
+
 
 func evaluateFunctionDeclaration(stmt *ast.FunctionDeclarationStatement, env Environment) RuntimeValue {
 	// Capture the current environment (closure)
@@ -73,4 +85,14 @@ func evaluateFunctionDeclaration(stmt *ast.FunctionDeclarationStatement, env Env
 
 	env.DeclareVariable(stmt.Line, stmt.Name, fn, true, false)
 	return fn
+}
+
+func (i *Interpreter) evaluateWhileLoopStatement(stmt *ast.WhileLoopStatement, env Environment) RuntimeValue {
+	condition := i.EvaluateExpression(stmt.Condition, env)
+
+	for isTruthy(condition) {
+		i.EvaluateStatement(stmt.Body, env)
+		condition = i.EvaluateExpression(stmt.Condition, env)
+	}
+	return NIL()
 }

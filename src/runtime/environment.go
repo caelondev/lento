@@ -3,6 +3,8 @@ package runtime
 import (
 	"fmt"
 	"slices"
+	"strings"
+
 	errorhandler "github.com/caelondev/lento/src/error-handler"
 )
 
@@ -37,6 +39,58 @@ func NewEnvironment(parent Environment, errorHandler *errorhandler.ErrorHandler)
 	return env
 }
 
+func (e *EnvironmentStruct) String() string {
+	vars := []string{}
+	for k, v := range e.variables {
+		vars = append(vars, fmt.Sprintf("%s=%v", k, v))
+	}
+
+	parentInfo := "nil"
+	if e.parent != nil {
+		parentInfo = "Environment{...}"
+	}
+
+	return fmt.Sprintf("Environment{vars: [%s], parent: %s}", 
+		strings.Join(vars, ", "), 
+		parentInfo)
+}
+
+func (e *EnvironmentStruct) Debug(depth int) {
+	indent := ""
+	for range indent {
+		indent += "  "
+	}
+	
+	fmt.Printf("%s┌─ Environment (depth %d)\n", indent, depth)
+	
+	// Show variables
+	for name, value := range e.variables {
+		isConst := slices.Contains(e.constants, name)
+		isNative := slices.Contains(e.natives, name)
+		
+		marker := ""
+		if isNative {
+			marker = " [native]"
+		} else if isConst {
+			marker = " [const]"
+		} else {
+			marker = " [var]"
+		}
+		
+		fmt.Printf("%s│  %s%s = %v\n", indent, name, marker, value)
+	}
+	
+	// Recurse to parent 
+	if e.parent != nil {
+		fmt.Printf("%s│\n", indent)
+		if parentStruct, ok := e.parent.(*EnvironmentStruct); ok {
+			parentStruct.Debug(depth + 1)
+		}
+	} else {
+		fmt.Printf("%s└─ (global scope)\n", indent)
+	}
+}
+
 func DeclareGlobalVariables(env Environment) {
 	isConstant := true
 	isNative := true
@@ -48,6 +102,7 @@ func DeclareGlobalVariables(env Environment) {
 
 	// Native functions
 	env.DeclareVariable(0, "print", NATIVE_FUNCTION("print", NATIVE_PRINT_FUNCTION), isConstant, isNative)
+	env.DeclareVariable(0, "printLn", NATIVE_FUNCTION("printLn", NATIVE_PRINTLN_FUNCTION), isConstant, isNative)
 	env.DeclareVariable(0, "len", NATIVE_FUNCTION("len", NATIVE_LEN_FUNCTION), isConstant, isNative)
 	env.DeclareVariable(0, "toUpper", NATIVE_FUNCTION("toUpper", NATIVE_TO_UPPER_FUNCTION), isConstant, isNative)
 	env.DeclareVariable(0, "toLower", NATIVE_FUNCTION("toLower", NATIVE_TO_LOWER_FUNCTION), isConstant, isNative)

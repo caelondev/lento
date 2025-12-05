@@ -33,27 +33,38 @@ func (node *VariableDeclarationStatement) GetLine() uint {
 }
 
 type IfStatement struct {
-    Condition  Expression
-    Consequent Statement
-    Alternate  Statement
-    Line       uint
+	Condition  Expression
+	Consequent Statement
+	Alternate  Statement
+	Line       uint
 }
 
 func (i *IfStatement) GetLine() uint {
-    return i.Line
+	return i.Line
 }
 
 func (i *IfStatement) Statement() {}
 
 type FunctionDeclarationStatement struct {
-    Name       string
-    Parameters []string
-    Body       Statement
-    Line       uint
+	Name       string
+	Parameters []string
+	Body       Statement
+	Line       uint
 }
 
 func (f *FunctionDeclarationStatement) Statement() {}
 func (f *FunctionDeclarationStatement) GetLine() uint {
-    return f.Line
+	return f.Line
+}
+
+type WhileLoopStatement struct {
+	Condition  Expression
+	Body       Statement
+	Line       uint
+}
+
+func (w *WhileLoopStatement) Statement() {}
+func (w *WhileLoopStatement) GetLine() uint {
+	return w.Line
 }
 

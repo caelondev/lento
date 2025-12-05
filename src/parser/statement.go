@@ -98,7 +98,6 @@ func parseIfStatement(p *parser) ast.Statement {
 	// if (condition) { ... }
 	// if (condition) ...
 	// if condition { ... }
-	// if condition ...
 	//
 	// else { ... }
 	// else ...
@@ -182,5 +181,42 @@ func parseFunctionDeclaration(p *parser) ast.Statement {
 		Parameters: parameters,
 		Body:       body,
 		Line:       p.line,
+	}
+}
+
+func parseWhileStatement(p *parser) ast.Statement {
+	// SYNTAX ---
+	// while condition { ... }
+	// while (condition) { ... }
+	// while (condition) ...;
+	//
+
+	var condition ast.Expression
+	var body ast.Statement
+
+	p.advance() // Eat WHILE token ---
+
+	// Optional parentheses around condition
+	if p.currentTokenType() == lexer.LEFT_PARENTHESIS {
+		p.advance() // Eat '('
+		condition = parseExpression(p, DEFAULT_BP)
+		p.expect(lexer.RIGHT_PARENTHESIS)
+	} else {
+		condition = parseExpression(p, DEFAULT_BP)
+	}
+
+	// Parse the loop body
+	if p.currentTokenType() == lexer.LEFT_BRACE {
+		p.advance() // Eat '{'
+		body = parseBlockStatement(p)
+	} else {
+		// Single statement loop body (no braces)
+		body = parseStatement(p)
+	}
+
+	return &ast.WhileLoopStatement{
+		Condition: condition,
+		Body:      body,
+		Line:      p.line,
 	}
 }

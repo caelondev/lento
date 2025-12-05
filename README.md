@@ -245,52 +245,21 @@ greet("Alice")          // User-defined function
 var sum = add(5, 3)
 ```
 
-## Complete Example
+### Loops
+
+#### While loops
+
+While loops can be written with this syntax
 
 ```lento
-// Variable declaration
-var counter = 0
-const maxValue = 100
+var x = 0;
 
-// Arithmetic operations
-var result = (10 + 5) * 2   // 30
-var remainder = 17 % 5       // 2
-
-// Logical operations
-var isValid = true and (counter < maxValue)
-
-// String manipulation
-var greeting = "Hello"
-greeting = greeting + ", World!"
-
-// Arrays and objects
-var scores = [95, 87, 92]
-var player = {
-  name: "Alice",
-  score: scores[0],
-  level: 5
+while (x < 100) { // This loops over-and-over again until
+  x = x+10;       // x is >= 100
+  print(x) // Outputs (x + 10)
 }
 
-// Control flow
-if (counter < maxValue) {
-  counter = counter + 1
-}
-
-// Functions with closures
-fn createCounter() {
-  var count = 0
-  
-  fn increment() {
-    count = count + 1
-    print(count)
-  }
-  
-  increment
-}
-
-var myCounter = createCounter()
-myCounter()  // Prints 1
-myCounter()  // Prints 2
+print(x) // Outputs 100
 ```
 
 ## Interactive REPL

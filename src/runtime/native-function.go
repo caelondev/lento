@@ -21,6 +21,18 @@ func NATIVE_PRINT_FUNCTION(args []RuntimeValue, env Environment, i *Interpreter)
 	return NIL()
 }
 
+func NATIVE_PRINTLN_FUNCTION(args []RuntimeValue, env Environment, i *Interpreter) RuntimeValue {
+	for _, arg := range args {
+		if arg.Type() == "string" {
+			strValue := arg.String()[1 : len(arg.String())-1]
+			fmt.Println(strValue)
+		} else {
+			fmt.Println(arg)
+		}
+	}
+	return NIL()
+}
+
 func NATIVE_LEN_FUNCTION(args []RuntimeValue, env Environment, i *Interpreter) RuntimeValue {
 	if len(args) != 1 {
 		i.errorHandler.ReportError(

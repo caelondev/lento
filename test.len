@@ -1,11 +1,1 @@
-var obj = {
-  name: "Bob",
-  info: {
-    birthYear: 2003
-  }
-};
 
-print(obj.name);
-print(obj.info);
-obj.info.birthYear = 2000;
-print(obj.info);

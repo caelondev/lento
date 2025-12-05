@@ -188,6 +188,7 @@ func (i *Interpreter) evaluateNumericBinaryExpression(left *NumberValue, right *
 		return BOOLEAN(lhs == rhs)
 	case lexer.NOT_EQUAL:
 		return BOOLEAN(lhs != rhs)
+
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unsupported numeric binary operator: '%s'", operator.Lexeme))
 	}
