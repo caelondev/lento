@@ -89,7 +89,7 @@ func (a *ArrayExpression) GetLine() uint {
 }
 
 type IndexExpression struct {
-	Array Expression
+	Expr   Expression
 	Index  Expression
 	Line   uint
 }
@@ -120,14 +120,18 @@ type MemberExpression struct {
 	Line     uint
 }
 
+func (m *MemberExpression) Expression() {}
 func (m *MemberExpression) GetLine() uint {
 	return m.Line
 }
 
-func (m *MemberExpression) Expression() {}
-
 type PostfixExpression struct {
 	Operand Expression
-	Operatot lexer.TokenType
+	Operator *lexer.Token
 	Line uint
+}
+
+func (p *PostfixExpression) Expression() {}
+func (p *PostfixExpression) GetLine() uint {
+	return p.Line
 }

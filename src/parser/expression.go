@@ -203,7 +203,7 @@ func parseIndexExpression(p *parser, left ast.Expression, bp BindingPower) ast.E
 	p.expect(lexer.RIGHT_BRACKET)
 
 	return &ast.IndexExpression{
-		Array: left,
+		Expr: left,
 		Index: index,
 		Line:  p.line,
 	}
@@ -263,5 +263,13 @@ func parseMemberExpression(p *parser, left ast.Expression, bp BindingPower) ast.
 		Object:   left,
 		Property: property,
 		Line:     p.line,
+	}
+}
+
+func parsePostfixExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
+	return &ast.PostfixExpression{
+		Operand: left,
+		Operator: p.advance(),
+		Line: p.line,
 	}
 }

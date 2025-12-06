@@ -1,7 +1,3 @@
-var name = ["Jericho", "CJ", "Bren", "Justin"];
-
-for(var i = 0; i < len(name); i+=1) {
-  var neighbor = i + 1;
-
-  printLn(name[i], name[neighbor])
+for(var i = 0; i < 20; i++) {
+  print(i);
 }

@@ -68,6 +68,10 @@ func createTokenLookups() {
 	// COMPOUND OPERATORS ---
 	led(lexer.PLUS_EQUALS, ASSIGNMENT, parseAssignmentExpression)
 
+	// POSTFIX EXPRESSION ---
+	led(lexer.PLUS_PLUS, POSTFIX, parsePostfixExpression)
+	led(lexer.MINUS_MINUS, POSTFIX, parsePostfixExpression)
+
 	// ADDITIVE & MULTIPLICATIVE ---
 	led(lexer.PLUS, ADDITIVE, parseBinaryExpression)
 	led(lexer.MINUS, ADDITIVE, parseBinaryExpression)

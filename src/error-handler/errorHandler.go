@@ -21,6 +21,7 @@ func (e *ErrorHandler) ReportError(reporter, errorMessage string, line uint, cod
 	if e.HadError { // Avoid multiple confusing error messages ---
 		return
 	}
-	fmt.Printf("%s::Error on line %d: %s\n", reporter, int(line), errorMessage)
+
 	e.HadError = true
+	fmt.Printf("%s::Error on line %d: %s\n", reporter, int(line), errorMessage)
 }

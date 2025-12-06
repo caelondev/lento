@@ -10,6 +10,10 @@ import (
 )
 
 func (i *Interpreter) EvaluateExpression(expr ast.Expression, env Environment) RuntimeValue {
+	if i.errorHandler.HadError {
+		return NIL()
+	}
+
 	i.line = uint(expr.GetLine())
 
 	switch n := expr.(type) {
@@ -34,7 +38,9 @@ func (i *Interpreter) EvaluateExpression(expr ast.Expression, env Environment) R
 	case *ast.ObjectExpression:
 		return i.evaluateObjectExpression(n, env)
 	case *ast.MemberExpression:
-		return  i.evaluateMemberExoression(n, env)
+		return i.evaluateMemberExpression(n, env)
+	case *ast.PostfixExpression:
+		return i.evaluatePostfixExpression(n, env)
 
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Expression whilst evaluating: %T\n", expr))
@@ -54,6 +60,51 @@ func evaluateSymbolExpression(expr *ast.SymbolExpression, env Environment) Runti
 func evaluateStringExpression(expr *ast.StringExpression) RuntimeValue {
 	value := expr.Value[1 : len(expr.Value)-1]
 	return &StringValue{Value: value}
+}
+
+func (i *Interpreter) evaluatePostfixExpression(expr *ast.PostfixExpression, env Environment) RuntimeValue {
+	symbol, ok := expr.Operand.(*ast.SymbolExpression)
+	if !ok {
+		i.errorHandler.ReportError(
+			"Interpreter-Postfix",
+			"Postfix operators can only be applied to variables",
+			i.line,
+			errorhandler.InvalidPostfixExpressionError,
+		)
+		return NIL()
+	}
+
+	currentValue := env.LookupVariable(i.line, symbol.Value)
+	
+	numValue, ok := currentValue.(*NumberValue)
+	if !ok {
+		i.errorHandler.ReportError(
+			"Interpreter-Postfix",
+			fmt.Sprintf("Cannot apply postfix operator to non-number type '%s'", currentValue.Type()),
+			i.line,
+			errorhandler.InvalidPostfixExpressionError,
+		)
+		return NIL()
+	}
+
+	oldValue := numValue.Value
+	var newValue float64
+	switch expr.Operator.TokenType {
+	case lexer.PLUS_PLUS:
+		newValue = numValue.Value + 1
+	case lexer.MINUS_MINUS:
+		newValue = numValue.Value - 1
+	default:
+		i.errorHandler.ReportError(
+			"Interpreter-Postfix",
+			fmt.Sprintf("Unknown postfix operator '%s'", lexer.TokenTypeString[expr.Operator.TokenType]),
+			i.line,
+			errorhandler.InvalidPostfixExpressionError,
+		)
+		return NIL()
+	}
+	env.AssignVariable(i.line, symbol.Value, &NumberValue{Value: newValue})
+	return &NumberValue{Value: oldValue}
 }
 
 func (i *Interpreter) evaluateObjectExpression(expr *ast.ObjectExpression, env Environment) RuntimeValue {
@@ -220,7 +271,7 @@ func (i *Interpreter) assignToSymbol(assignee *ast.SymbolExpression, value Runti
 }
 
 func (i *Interpreter) assignToIndex(assignee *ast.IndexExpression, value RuntimeValue, operator lexer.TokenType, env Environment) RuntimeValue {
-	target := i.EvaluateExpression(assignee.Array, env)
+	target := i.EvaluateExpression(assignee.Expr, env)
 	index := i.EvaluateExpression(assignee.Index, env)
 
 	// Handle array assignment
@@ -244,11 +295,11 @@ func (i *Interpreter) assignToIndex(assignee *ast.IndexExpression, value Runtime
 
 func (i *Interpreter) assignToMember(assignee *ast.MemberExpression, value RuntimeValue, operator lexer.TokenType, env Environment) RuntimeValue {
 	object := i.EvaluateExpression(assignee.Object, env)
-	
+
 	if objValue, ok := object.(*ObjectValue); ok {
 		return i.assignToObjectProperty(objValue, assignee.Property, value, operator)
 	}
-	
+
 	i.errorHandler.ReportError(
 		"Interpreter-Member",
 		fmt.Sprintf("Cannot assign property to non-object type '%s'", object.Type()),
@@ -284,7 +335,7 @@ func (i *Interpreter) assignToArrayIndex(arrayValue *ArrayValue, index RuntimeVa
 	// Get current value for compound assignments
 	currentValue := arrayValue.Elements[idx]
 	finalValue := i.applyCompoundOperator(currentValue, value, operator)
-	
+
 	arrayValue.Elements[idx] = finalValue
 	return finalValue
 }
@@ -313,7 +364,7 @@ func (i *Interpreter) assignToObjectKey(objValue *ObjectValue, index RuntimeValu
 
 	// Key doesn't exist - only allow = operator for new properties
 	if operator != lexer.ASSIGNMENT {
-		i.errorHandler.Report(i.line, 
+		i.errorHandler.Report(i.line,
 			fmt.Sprintf("Cannot use compound assignment on undefined property '%s'", keyValue.Value))
 		return NIL()
 	}
@@ -339,7 +390,7 @@ func (i *Interpreter) assignToObjectProperty(objValue *ObjectValue, property str
 
 	// Property doesn't exist - only allow = operator for new properties
 	if operator != lexer.ASSIGNMENT {
-		i.errorHandler.Report(i.line, 
+		i.errorHandler.Report(i.line,
 			fmt.Sprintf("Cannot use compound assignment on undefined property '%s'", property))
 		return NIL()
 	}
@@ -372,7 +423,7 @@ func (i *Interpreter) applyCompoundOperator(currentValue RuntimeValue, value Run
 	rightNum, rightIsNum := value.(*NumberValue)
 
 	if !leftIsNum || !rightIsNum {
-		i.errorHandler.Report(i.line, 
+		i.errorHandler.Report(i.line,
 			"Compound assignment requires numeric operands")
 		return NIL()
 	}
@@ -397,7 +448,7 @@ func (i *Interpreter) applyCompoundOperator(currentValue RuntimeValue, value Run
 		}
 		return &NumberValue{Value: math.Mod(leftNum.Value, rightNum.Value)}
 	default:
-		i.errorHandler.Report(i.line, 
+		i.errorHandler.Report(i.line,
 			"Unsupported assignment operator")
 		return NIL()
 	}
@@ -409,7 +460,13 @@ func (i *Interpreter) evaluateCallExpression(call *ast.CallExpression, env Envir
 	// Parse all string arguments ---
 	var args []RuntimeValue
 	for _, argExpr := range call.Arguments {
-		args = append(args, i.EvaluateExpression(argExpr, env))
+		arg := i.EvaluateExpression(argExpr, env)
+
+		if i.errorHandler.HadError {
+			return NIL()
+		}
+
+		args = append(args, arg)
 	}
 
 	// Native function call ---
@@ -451,7 +508,7 @@ func (i *Interpreter) evaluateCallExpression(call *ast.CallExpression, env Envir
 }
 
 func (i *Interpreter) evaluateIndexExpression(expr *ast.IndexExpression, env Environment) RuntimeValue {
-	target := i.EvaluateExpression(expr.Array, env)
+	target := i.EvaluateExpression(expr.Expr, env)
 	index := i.EvaluateExpression(expr.Index, env)
 
 	// Handle arrays
@@ -461,14 +518,14 @@ func (i *Interpreter) evaluateIndexExpression(expr *ast.IndexExpression, env Env
 			i.errorHandler.Report(i.line, "Array index must be a number")
 			return NIL()
 		}
-		
+
 		idx := int(indexValue.Value)
 		if idx < 0 || idx >= len(arrayValue.Elements) {
-			i.errorHandler.Report(i.line, 
+			i.errorHandler.Report(i.line,
 				fmt.Sprintf("Index %d out of bounds for array of length %d", idx, len(arrayValue.Elements)))
 			return NIL()
 		}
-		
+
 		return arrayValue.Elements[idx]
 	}
 
@@ -479,23 +536,23 @@ func (i *Interpreter) evaluateIndexExpression(expr *ast.IndexExpression, env Env
 			i.errorHandler.Report(i.line, "Object key must be a string")
 			return NIL()
 		}
-		
+
 		for _, prop := range objValue.Properties {
 			if prop.Key == keyValue.Value {
 				return prop.Value
 			}
 		}
-		
+
 		// Key not found - return nil
 		return NIL()
 	}
 
-	i.errorHandler.Report(i.line, 
+	i.errorHandler.Report(i.line,
 		fmt.Sprintf("Cannot index type '%s'", target.Type()))
 	return NIL()
 }
 
-func (i *Interpreter) evaluateMemberExoression(expr *ast.MemberExpression, env Environment) RuntimeValue {
+func (i *Interpreter) evaluateMemberExpression(expr *ast.MemberExpression, env Environment) RuntimeValue {
 	object := i.EvaluateExpression(expr.Object, env)
 
 	if obj, ok := object.(*ObjectValue); ok {

@@ -7,6 +7,10 @@ import (
 )
 
 func (i *Interpreter) EvaluateStatement(stmt ast.Statement, env Environment) RuntimeValue {
+	if i.errorHandler.HadError {
+		return NIL()
+	}
+
 	i.line = uint(stmt.GetLine())
 
 	switch n := stmt.(type) {

@@ -16,4 +16,5 @@ const (
 	ObjectKeyError ErrorType = "OBJECT_KEY_ERR"
 	MemberExpressionError ErrorType = "MEMBER_EXPR_ERR"
 	VariableDeclarationError ErrorType = "VARIABLE_DECL_ERR"
+	InvalidPostfixExpressionError ErrorType = "INVALID_POSTFIX_EXPR_ERR"
 )

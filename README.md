@@ -25,6 +25,7 @@ go install github.com/caelondev/lento@latest
 Lento supports five core data types:
 
 **Number** - Integers and floating-point values
+
 ```lento
 42
 3.14
@@ -32,12 +33,14 @@ Lento supports five core data types:
 ```
 
 **Boolean** - Logical true/false values
+
 ```lento
 true
 false
 ```
 
 **String** - Text in quotes (single, double, or backticks for multiline)
+
 ```lento
 "Hello, World!"
 'Single quotes work too'
@@ -47,6 +50,7 @@ supported`
 ```
 
 **Array** - Ordered lists that can hold any type, including nested arrays
+
 ```lento
 [1, 2, 3]
 ["Apple", "Orange", "Banana"]
@@ -54,6 +58,7 @@ supported`
 ```
 
 **Object** - Key-value pairs for structured data
+
 ```lento
 {
   firstName: "Foo",
@@ -109,7 +114,7 @@ print(bar[1])  // Outputs "Bar"
 Objects can be printed directly or you can access specific properties using bracket notation or dot notation:
 
 ```lento
-var person = { 
+var person = {
   name: "Bob",
   age: 25,
   location: {
@@ -145,6 +150,7 @@ print(person.location.continent)  // Prints "Europe"
 ### Operators
 
 **Arithmetic**
+
 ```lento
 +      // Addition
 -      // Subtraction
@@ -154,6 +160,7 @@ print(person.location.continent)  // Prints "Europe"
 ```
 
 **Comparison**
+
 ```lento
 <      // Less than
 <=     // Less than or equal to
@@ -164,6 +171,7 @@ print(person.location.continent)  // Prints "Europe"
 ```
 
 **Logical**
+
 ```lento
 and    // Logical AND
 or     // Logical OR
@@ -171,6 +179,7 @@ not    // Logical NOT
 ```
 
 **Assignment**
+
 ```lento
 =      // Assignment
 +=     // Add and assign
@@ -178,6 +187,15 @@ not    // Logical NOT
 *=     // Multiply and assign
 /=     // Divide and assign
 %=     // Modulo and assign
+```
+
+Postfix
+
+```lento
+x++;  // Nothing fancy here, it's just a shorthand for `x+=1;`
+x--;  // Same here, shorthand for `x-=1;`
+
+// NOTE: Even though it's a shorthand, directly using x++ as a value (e.g., `print(x++)`) will return the old value... (if x is 0 before, it will print 0)
 ```
 
 ### Control Flow
@@ -206,8 +224,8 @@ if (x > 100) {
   x = 0
 }
 
-// Single-line syntax (parentheses optional with braces)
-if true { x = 42; }
+// Single-line syntax
+if (true) x = 42;
 if (x > 0) x = x - 1;
 ```
 
@@ -297,6 +315,7 @@ Lento is designed for speed. Even as a tree-walk interpreter, it executes script
 ## Contributing
 
 Contributions are welcome! Feel free to:
+
 - Report bugs or request features via [issues](https://github.com/caelondev/lento/issues)
 - Submit pull requests with improvements
 - Share your Lento scripts and projects
