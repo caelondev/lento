@@ -125,3 +125,9 @@ func (m *MemberExpression) GetLine() uint {
 }
 
 func (m *MemberExpression) Expression() {}
+
+type PostfixExpression struct {
+	Operand Expression
+	Operatot lexer.TokenType
+	Line uint
+}

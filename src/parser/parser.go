@@ -22,7 +22,18 @@ func ProduceAST(tokens []*lexer.Token, errorHandler *errorhandler.ErrorHandler) 
 	parser := instantiateParser(tokens, errorHandler)
 
 	for !parser.isEOF() {
-		body = append(body, parseStatement(parser))
+		stmt := parseStatement(parser)
+		
+		if errorHandler.HadError {
+			return ast.BlockStatement{
+				Body: nil,
+				Line: parser.line,
+			}
+		}
+		
+		if stmt != nil {
+			body = append(body, stmt)
+		}
 	}
 
 	return ast.BlockStatement{
@@ -46,7 +57,11 @@ func instantiateParser(tokens []*lexer.Token, errorHandler *errorhandler.ErrorHa
 func (p *parser) currentTokenType() lexer.TokenType {
 	return p.currentToken().TokenType
 }
+
 func (p *parser) currentToken() *lexer.Token {
+	if p.position >= len(p.tokens) {
+		return p.tokens[len(p.tokens)-1]
+	}
 	return p.tokens[p.position]
 }
 
@@ -85,6 +100,8 @@ func (p *parser) expectError(err string, expectedTypes ...lexer.TokenType) *lexe
 			p.line,
 			errorhandler.UnexpectedTokenError,
 		)
+
+		return token
 	}
 
 	return p.advance()
@@ -95,7 +112,11 @@ func (p *parser) advance() *lexer.Token {
 	if token.Line > p.line {
 		p.line = token.Line
 	}
-	p.position++
+	
+	if p.position < len(p.tokens)-1 {
+		p.position++
+	}
+	
 	return token
 }
 

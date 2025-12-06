@@ -74,7 +74,7 @@ func run(sourceCode string) runtime.RuntimeValue {
 	}
 
 	ast := parser.ProduceAST(tokens, ErrorHandler)
-	if ErrorHandler.HadError {
+	if ErrorHandler.HadError || ast.Body == nil {
 		return nil
 	}
 

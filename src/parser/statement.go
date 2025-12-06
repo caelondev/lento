@@ -30,7 +30,7 @@ func parseStatement(p *parser) ast.Statement {
 	if p.currentTokenType() != lexer.SEMICOLON {
 		p.errorHandler.ReportError(
 			"Parser",
-			fmt.Sprintf("Expected ';' after expression, got '%s'", p.currentToken().Lexeme),
+			fmt.Sprintf("Expected SEMICOLON after expression, got %s instead", lexer.TokenTypeString[p.currentTokenType()]),
 			p.line,
 			errorhandler.UnexpectedTokenError,
 		)

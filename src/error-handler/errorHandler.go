@@ -5,7 +5,7 @@ import (
 )
 
 type ErrorHandler struct {
-	HadError bool
+	HadError     bool
 	ErrorMessage ErrorType
 }
 
