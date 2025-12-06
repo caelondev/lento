@@ -195,7 +195,9 @@ Postfix
 x++;  // Nothing fancy here, it's just a shorthand for `x+=1;`
 x--;  // Same here, shorthand for `x-=1;`
 
-// NOTE: Even though it's a shorthand, directly using x++ as a value (e.g., `print(x++)`) will return the old value... (if x is 0 before, it will print 0)
+// NOTE: Even though it's a shorthand, directly using x++
+// as a value (e.g., `print(x++)`) will return the old
+// value... (if x is equal to 0 before, it will print 0)
 ```
 
 ### Control Flow
@@ -205,23 +207,23 @@ Lento supports standard if-else statements with flexible syntax:
 ```lento
 // Simple if
 if (x > 10) {
-  x = x + 1
+  x = x + 1;
 }
 
 // If-else
 if (x > 10) {
-  x = x * 2
+  x = x * 2;
 } else {
-  x = 5
+  x = 5;
 }
 
 // Else-if chains
 if (x > 100) {
-  x = 100
+  x = 100;
 } else if (x > 10) {
-  x = x + 5
+  x = x + 5;
 } else {
-  x = 0
+  x = 0;
 }
 
 // Single-line syntax
@@ -235,11 +237,7 @@ Define functions using the `fn` keyword:
 
 ```lento
 fn greet(name) {
-  print("Hello, " + name + "!")
-}
-
-fn add(a, b) {
-  a + b  // Last expression is returned
+  print("Hello, " + name + "!");
 }
 ```
 
@@ -251,16 +249,16 @@ Functions support closures and capture their surrounding environment:
 var x = 10
 
 fn makeAdder() {
-  x  // Captures x from outer scope
+  x;  // Captures x from outer scope
 }
 ```
 
 Call functions like you'd expect:
 
 ```lento
-print("Hello, World!")  // Built-in function
-greet("Alice")          // User-defined function
-var sum = add(5, 3)
+print("Hello, World!");  // Built-in function
+greet("Alice");          // User-defined function
+var sum = add(5, 3);
 ```
 
 ### Loops
@@ -274,10 +272,10 @@ var x = 0;
 
 while (x < 100) { // This loops over-and-over again until
   x = x+10;       // x is >= 100
-  print(x) // Outputs (x + 10)
+  print(x); // Outputs (x + 10)
 }
 
-print(x) // Outputs 100
+print(x); // Outputs 100
 ```
 
 #### For loops
@@ -286,7 +284,7 @@ If you're familliar with the C language, the syntax for declaring a for-loop is 
 
 ```lento
 for (var x = 0; x < 10; x+=1) {
-  print(x) // Outputs 0-9
+  print(x); // Outputs 0-9
 }
 ```
 
@@ -296,13 +294,13 @@ Lento includes an interactive REPL for quick experimentation:
 
 ```bash
 $ lento
->> var x = 42
+>> var x = 42;
 42
->> x * 2
+>> x * 2;
 84
->> fn greet(name) "Hello, " + name
+>> fn greet(name) "Hello, " + name;
 [ greet function ]
->> greet("World")
+>> greet("World");
 Hello, World!
 ```
 

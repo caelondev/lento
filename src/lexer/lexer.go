@@ -130,7 +130,8 @@ func (l *Lexer) handleMultilineString() {
 			"Unterminated multiline string",
 			l.Line,
 			errorhandler.UnterminatedError,
-			)
+		)
+		return
 	}
 	l.match('`') // Check and eat '`' closing string --- 
 	literal := string(l.SourceCode[l.Start+1 : l.Current-1])
@@ -152,6 +153,7 @@ func (l *Lexer) handleString(char rune) {
 			l.Line,
 			errorhandler.UnterminatedError,
 		)
+		return
 	}
 
 	l.match(char)
@@ -225,8 +227,19 @@ func (l *Lexer) handleCompound(regular, compound TokenType) {
 }
 
 func (l *Lexer) handleNumbers() {
-	for isNumber(l.peek()) && !l.isEOF() {
-		l.advance() // Keep consuming numbers ---
+	for isNumber(l.peek()) || l.peek() == '_' {
+		if l.peek() == '_' {
+			if !isNumber(l.peekNext()) {
+				l.ErrorHandler.ReportError(
+					"Lexer-Tokenizer",
+					"Numeric separator '_' must be between digits",
+					l.Line,
+					errorhandler.ExpectedTypeError,
+				)
+				return
+			}
+		}
+		l.advance()
 	}
 
 	// Handle floats
@@ -234,26 +247,48 @@ func (l *Lexer) handleNumbers() {
 		if !isNumber(l.peekNext()) {
 			l.ErrorHandler.ReportError(
 				"Lexer-Tokenizer",
-				"Expected number after '.' operator...",
+				"Expected number after '.' operator",
 				l.Line,
 				errorhandler.ExpectedTypeError,
 			)
+			return
 		}
 
-		l.match('.')
+		l.advance() // eat '.'
 
-		for isNumber(l.peek()) {
+		// Parse decimal part (with underscores)
+		for isNumber(l.peek()) || l.peek() == '_' {
+			if l.peek() == '_' {
+				if !isNumber(l.peekNext()) {
+					l.ErrorHandler.ReportError(
+						"Lexer-Tokenizer",
+						"Numeric separator '_' must be between digits",
+						l.Line,
+						errorhandler.ExpectedTypeError,
+					)
+					return
+				}
+			}
 			l.advance()
 		}
 	}
 
-	value := string(l.SourceCode[l.Start:l.Current])
-	parsedNumber, error := strconv.ParseFloat(value, 64)
+	// Remove underscores before parsing
+	rawValue := string(l.SourceCode[l.Start:l.Current])
+	cleanValue := ""
+	for _, char := range rawValue {
+		if char != '_' {
+			cleanValue += string(char)
+		}
+	}
+
+	parsedNumber, error := strconv.ParseFloat(cleanValue, 64)
 	if error != nil {
 		l.ErrorHandler.Report(
 			l.Line,
-			fmt.Sprintf("Failed to parse %s into a float whilst tokenizing", value),
+			fmt.Sprintf("Failed to parse %s into a float whilst tokenizing", rawValue),
 		)
+		return
 	}
 
 	l.addTokenWithLiteral(NUMBER, parsedNumber, 0)
@@ -319,21 +354,13 @@ func isNumber(char rune) bool {
 
 func isAlphabet(char rune) bool {
 	return (char >= 'a' && char <= 'z') ||
-		(char >= 'A' && char <= 'Z') ||
-		char == '_'
+        (char >= 'A' && char <= 'Z')
 }
 
 func isAlphanumeric(char rune) bool {
-	return isAlphabet(char) || isNumber(char)
+	return isAlphabet(char) || isNumber(char) || isUnderscore(char)
 }
 
-func (l *Lexer) expectError(expected rune, errorMessage string) {
-	if l.peek() != expected {
-		l.ErrorHandler.ReportError(
-			"Lexer-Tokenizer",
-			errorMessage,
-			l.Line,
-			errorhandler.ExpectedTypeError,
-		)
-	}
+func isUnderscore(char rune) bool {
+	return char == '_'
 }

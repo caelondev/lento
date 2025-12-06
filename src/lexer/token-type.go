@@ -19,6 +19,7 @@ const (
 	COMMA
 	SEMICOLON
 	COLON
+	UNDERSCORE
 
 	ASSIGNMENT
 	PLUS
@@ -91,6 +92,7 @@ var TokenTypeString = map[TokenType]string{
 	COMMA:             "COMMA",
 	SEMICOLON:         "SEMICOLON",
 	COLON:             "COLON",
+	UNDERSCORE:        "UNDERSCORE",
 
 	ASSIGNMENT: "ASSIGNMENT",
 	PLUS:       "PLUS",
