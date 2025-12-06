@@ -10,6 +10,7 @@ import (
 )
 
 func parseExpression(p *parser, bp BindingPower) ast.Expression {
+	
 	tokenType := p.currentTokenType()
 	nudFunction, exists := nudLU[tokenType]
 
@@ -38,6 +39,7 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 	if left == nil {
 		return nil // Propagate error ---
 	}
+	
 
 	for !p.isEOF() && bindingPowerLU[p.currentTokenType()] > bp {
 		tokenType = p.currentTokenType()
@@ -59,8 +61,9 @@ func parseExpression(p *parser, bp BindingPower) ast.Expression {
 		if left == nil {
 			return nil
 		}
+		
 	}
-
+	
 	return left
 }
 
@@ -104,7 +107,9 @@ func parsePrimaryExpression(p *parser) ast.Expression {
 
 func parseBinaryExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
 	operatorToken := p.advance() // Eat operator
+	
 	right := parseExpression(p, bp)
+	
 
 	return &ast.BinaryExpression{
 		Left:     left,
@@ -203,7 +208,7 @@ func parseIndexExpression(p *parser, left ast.Expression, bp BindingPower) ast.E
 	p.expect(lexer.RIGHT_BRACKET)
 
 	return &ast.IndexExpression{
-		Expr: left,
+		Expr:  left,
 		Index: index,
 		Line:  p.line,
 	}
@@ -268,8 +273,8 @@ func parseMemberExpression(p *parser, left ast.Expression, bp BindingPower) ast.
 
 func parsePostfixExpression(p *parser, left ast.Expression, bp BindingPower) ast.Expression {
 	return &ast.PostfixExpression{
-		Operand: left,
+		Operand:  left,
 		Operator: p.advance(),
-		Line: p.line,
+		Line:     p.line,
 	}
 }

@@ -88,13 +88,17 @@ func createTokenLookups() {
 	statement(lexer.WHILE, parseWhileStatement)
 	statement(lexer.FOR, parseForStatement)
 
+	// KEYWORDS ---
+	statement(lexer.RETURN, parseReturnStatement)
+	statement(lexer.CONTINUE, parseContinueStatement)
+	statement(lexer.BREAK, parseBreakStatement)
+
 	// CALL EXPRESSION ---
 	led(lexer.LEFT_PARENTHESIS, CALL, parseCallExpression)
 
 	// UNARY OPERATORS ---
 	nud(lexer.NOT, parseUnaryExpression)
 	nud(lexer.MINUS, parseUnaryExpression)
-	nud(lexer.PLUS, parseUnaryExpression)
 
 	// COMPARISON OPERATORS --+
 	led(lexer.GREATER, RELATIONAL, parseBinaryExpression)

@@ -189,7 +189,7 @@ not    // Logical NOT
 %=     // Modulo and assign
 ```
 
-Postfix
+**Postfix**
 
 ```lento
 x++;  // Nothing fancy here, it's just a shorthand for `x+=1;`
@@ -261,32 +261,100 @@ greet("Alice");          // User-defined function
 var sum = add(5, 3);
 ```
 
+#### Return Statements
+
+Functions can return values using the `return` keyword. Once a return statement is executed, the function immediately exits:
+
+```lento
+fn add(x, y) {
+  return x + y;
+}
+
+print(add(5, 3));  // Outputs 8
+```
+
+You can also use `return` without a value to exit a function early:
+
+```lento
+fn checkAge(age) {
+  if (age < 18) {
+    return "Too young";
+  }
+  return "Old enough";
+}
+
+print(checkAge(15));  // Outputs "Too young"
+```
+
+If you return without a value, the function returns `nil`:
+
+```lento
+fn greet(name) {
+  if (name == "") {
+    return;  // Returns nil and exits
+  }
+  print("Hello, " + name);
+}
+```
+
 ### Loops
 
 #### While loops
 
-While loops can be written with this syntax
+While loops execute repeatedly as long as their condition is true:
 
 ```lento
 var x = 0;
 
-while (x < 100) { // This loops over-and-over again until
-  x = x+10;       // x is >= 100
-  print(x); // Outputs (x + 10)
+while (x < 100) {  // Loops until x >= 100
+  x = x + 10;
+  print(x);  // Outputs 10, 20, 30, ... 100
 }
 
-print(x); // Outputs 100
+print(x);  // Outputs 100
 ```
 
 #### For loops
 
-If you're familliar with the C language, the syntax for declaring a for-loop is the same
+If you're familiar with the C language, the syntax for declaring a for-loop is the same:
 
 ```lento
-for (var x = 0; x < 10; x+=1) {
-  print(x); // Outputs 0-9
+for (var x = 0; x < 10; x += 1) {
+  print(x);  // Outputs 0-9
 }
 ```
+
+#### Break and Continue
+
+Control loop execution with `break` and `continue`:
+
+**Break** - Immediately exits the loop:
+
+```lento
+var i = 0;
+while (i < 10) {
+  if (i == 5) {
+    break;  // Stops the loop when i is 5
+  }
+  print(i);
+  i = i + 1;
+}
+// Outputs: 0, 1, 2, 3, 4
+```
+
+**Continue** - Skips the rest of the current iteration and jumps to the next one:
+
+```lento
+for (var i = 0; i < 10; i = i + 1) {
+  if (i % 2 == 0) {
+    continue;  // Skip even numbers
+  }
+  print(i);
+}
+// Outputs: 1, 3, 5, 7, 9
+```
+
+Both `break` and `continue` work in `while` and `for` loops, giving you fine control over loop execution.
 
 ## Interactive REPL
 

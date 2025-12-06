@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/caelondev/lento/src/ast"
+	errorhandler "github.com/caelondev/lento/src/error-handler"
 )
 
 func (i *Interpreter) EvaluateStatement(stmt ast.Statement, env Environment) RuntimeValue {
@@ -28,6 +29,13 @@ func (i *Interpreter) EvaluateStatement(stmt ast.Statement, env Environment) Run
 		return i.evaluateWhileLoopStatement(n, env)
 	case *ast.ForStatement:
 		return i.evaluateForStatement(n, env)
+	case *ast.ReturnStatement:
+		return i.evaluateReturnStatement(n, env)
+	case *ast.BreakStatement:
+		return i.evaluateBreakStatement(n, env)
+	case *ast.ContinueStatement:
+		return i.evaluateContinueStatement(n, env)
+
 
 	default:
 		i.errorHandler.Report(i.line, fmt.Sprintf("Unrecognized AST Statement whilst evaluating: %T\n", stmt))
@@ -51,6 +59,10 @@ func (i *Interpreter) evaluateBlockStatement(block *ast.BlockStatement, env Envi
 	var lastEvaluated RuntimeValue = NIL()
 	for _, statement := range block.Body {
 		lastEvaluated = i.EvaluateStatement(statement, blockScope)
+
+		if _, ok := lastEvaluated.(*ControlFlowValue); ok {
+			return lastEvaluated
+		}
 	}
 
 	return lastEvaluated
@@ -94,19 +106,42 @@ func evaluateFunctionDeclaration(stmt *ast.FunctionDeclarationStatement, env Env
 }
 
 func (i *Interpreter) evaluateWhileLoopStatement(stmt *ast.WhileLoopStatement, env Environment) RuntimeValue {
+	wasInLoop := i.isInLoop
+	i.isInLoop = true
+
+	defer func() { i.isInLoop = wasInLoop }()
+
 	condition := i.EvaluateExpression(stmt.Condition, env)
 
 	for isTruthy(condition) {
-		i.EvaluateStatement(stmt.Body, env)
+		result := i.EvaluateStatement(stmt.Body, env)
+
+		if control, ok := result.(*ControlFlowValue); ok {
+			switch control.FlowType {
+			case FLOW_BREAK:
+				return NIL()
+			case FLOW_CONTINUE:
+				// Continue
+			case FLOW_RETURN:
+				return control  // Propagate return up
+			}
+		}
+
 		condition = i.EvaluateExpression(stmt.Condition, env)
 	}
+
 	return NIL()
 }
 
 func (i *Interpreter) evaluateForStatement(stmt *ast.ForStatement, env Environment) RuntimeValue {
 	forScope := NewEnvironment(env, i.errorHandler)
 
-	i.EvaluateStatement(stmt.Init, forScope)
+	wasInLoop := i.isInLoop
+	i.isInLoop = true
+
+	defer func() { i.isInLoop = wasInLoop }()
+
+	i.EvaluateStatement(stmt.Init, forScope) // Initialize initializer variable
 
 	for {
 		if stmt.Condition != nil {
@@ -116,9 +151,66 @@ func (i *Interpreter) evaluateForStatement(stmt *ast.ForStatement, env Environme
 			}
 		}
 
-		i.EvaluateStatement(stmt.Body, forScope)
-		i.EvaluateExpression(stmt.Increment, forScope)
+		result := i.EvaluateStatement(stmt.Body, forScope)
+
+		if control, ok := result.(*ControlFlowValue); ok {
+			switch control.FlowType {
+			case FLOW_BREAK:
+				return NIL()
+			case FLOW_CONTINUE:
+				// Continue
+			case FLOW_RETURN:
+				return control  // Propagate return up
+			}
+		}
+
+		i.EvaluateExpression(stmt.Increment, forScope) // Increment initializer
 	}
 
 	return NIL()
+}
+
+func (i *Interpreter) evaluateReturnStatement(stmt *ast.ReturnStatement, env Environment) RuntimeValue {
+	var value RuntimeValue = NIL()
+
+	if !i.isInFunction {
+		i.errorHandler.ReportError(
+			"Interpreter-Return",
+			"Illegal return statement outside of a function body",
+			i.line,
+			errorhandler.IllegalStatementError,
+		)
+	}
+
+	if stmt.Value != nil {
+		value = i.EvaluateExpression(stmt.Value, env)
+	}
+
+	return RETURN(value)
+}
+
+func (i *Interpreter) evaluateBreakStatement(stmt *ast.BreakStatement, env Environment) RuntimeValue {
+	if !i.isInLoop {
+		i.errorHandler.ReportError(
+			"Interpreter-Break",
+			"Illegal break statement outside of a loop body",
+			i.line,
+			errorhandler.IllegalStatementError,
+		)
+	}
+
+	return BREAK()
+}
+
+func (i *Interpreter) evaluateContinueStatement(stmt *ast.ContinueStatement, env Environment) RuntimeValue {
+	if !i.isInLoop {
+		i.errorHandler.ReportError(
+			"Interpreter-Continue",
+			"Illegal continue statement outside of a loop body",
+			i.line,
+			errorhandler.IllegalStatementError,
+		)
+	}
+
+	return CONTINUE()
 }

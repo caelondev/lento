@@ -59,6 +59,9 @@ const (
 	WHILE
 	FOR
 	RANGE
+	BREAK
+	RETURN
+	CONTINUE
 	OF
 )
 
@@ -75,6 +78,9 @@ var RESERVED_KEYWORDS = map[string]TokenType{
 	"for": FOR,
 	"range": RANGE,
 	"of": OF,
+	"break": BREAK,
+	"return": RETURN,
+	"continue": CONTINUE,
 }
 
 var TokenTypeString = map[TokenType]string{
@@ -112,6 +118,9 @@ var TokenTypeString = map[TokenType]string{
 	FOR: "FOR",
 	RANGE: "RANGE",
 	OF: "OF",
+	BREAK: "BREAK",
+	RETURN: "RETURN",
+	CONTINUE: "CONTINUE",
 
 	LESS:          "LESS",
 	LESS_EQUAL:    "LESS_EQUAL",

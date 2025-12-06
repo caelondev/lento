@@ -69,10 +69,10 @@ func (w *WhileLoopStatement) GetLine() uint {
 }
 
 type ForStatement struct {
-	Init      Statement  // Initialization (e.g., var x = 0)
-	Condition Expression // Loop condition (e.g., x < 10)
-	Increment Expression  // Increment statement (e.g., x++)
-	Body      Statement  // Usually a BlockStatement
+	Init      Statement
+	Condition Expression
+	Increment Expression
+	Body      Statement
 	Line      uint
 }
 
@@ -80,3 +80,25 @@ func (f *ForStatement) Statement() {}
 func (f *ForStatement) GetLine() uint {
 	return f.Line
 }
+
+type ReturnStatement struct {
+	Value Expression
+	Line  uint
+}
+
+func (r *ReturnStatement) GetLine() uint { return r.Line }
+func (r *ReturnStatement) Statement() {}
+
+type BreakStatement struct {
+	Line uint
+}
+
+func (b *BreakStatement) GetLine() uint { return b.Line }
+func (b *BreakStatement) Statement() {}
+
+type ContinueStatement struct {
+	Line uint
+}
+
+func (c *ContinueStatement) GetLine() uint { return c.Line }
+func (c *ContinueStatement) Statement() {}

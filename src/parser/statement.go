@@ -107,7 +107,7 @@ func parseIfStatement(p *parser) ast.Statement {
 	var consequent ast.Statement // If block ---
 	var alternate ast.Statement  // else block
 
-	p.expect(lexer.IF)
+	p.advance()
 
 	p.expect(lexer.LEFT_PARENTHESIS)
 	condition = parseExpression(p, DEFAULT_BP)
@@ -150,7 +150,7 @@ func parseFunctionDeclaration(p *parser) ast.Statement {
 	var parameters []string
 	var body ast.Statement
 
-	p.expect(lexer.FUNCTION)
+	p.advance()
 
 	identifier = p.expect(lexer.IDENTIFIER).Lexeme
 
@@ -195,7 +195,7 @@ func parseWhileStatement(p *parser) ast.Statement {
 	var condition ast.Expression
 	var body ast.Statement
 
-	p.expect(lexer.WHILE)
+	p.advance()
 
 	// Optional parentheses around condition
 	if p.currentTokenType() == lexer.LEFT_PARENTHESIS {
@@ -228,17 +228,13 @@ func parseForStatement(p *parser) ast.Statement {
 	// for (var x = 0; x<10; x++) { ... }
 	// for (var x = 0; x<10; x++) ...
 	//
-	// INFINITE LOOP ---
-	// for (;;) { ... }
-	// for (;;) ...
-	//
 
 	var init ast.Statement
 	var condition ast.Expression
 	var increment ast.Expression
 	var body ast.Statement
 
-	p.expect(lexer.FOR)
+	p.advance()
 
 	p.expect(lexer.LEFT_PARENTHESIS)
 
@@ -273,5 +269,42 @@ func parseForStatement(p *parser) ast.Statement {
 		Increment: increment,
 		Body:      body,
 		Line:      p.line,
+	}
+}
+
+func parseReturnStatement(p *parser) ast.Statement {
+	var value ast.Expression
+
+	p.expect(lexer.RETURN)
+
+	if p.currentTokenType() != lexer.SEMICOLON {
+		value = parseExpression(p, COMMA)
+	}
+
+	p.expect(lexer.SEMICOLON)
+	
+	return &ast.ReturnStatement{
+		Value: value,
+		Line: p.line,
+	}
+}
+
+func parseBreakStatement(p *parser) ast.Statement {
+	line := p.line
+
+	p.advance()
+	p.expect(lexer.SEMICOLON)
+	return &ast.BreakStatement{
+		Line: line,
+	}
+}
+
+func parseContinueStatement(p *parser) ast.Statement {
+	line := p.line
+
+	p.advance()
+	p.expect(lexer.SEMICOLON)
+	return &ast.ContinueStatement{
+		Line: line,
 	}
 }

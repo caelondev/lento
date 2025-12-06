@@ -19,6 +19,12 @@ const (
 	NATIVE_FUNCTION_VALUE ValueTypes = "native_function"
 )
 
+const (
+	FLOW_BREAK = "break"
+	FLOW_CONTINUE = "continue"
+	FLOW_RETURN = "return"
+)
+
 type RuntimeValue interface {
 	Type() ValueTypes
 	String() string
@@ -150,7 +156,7 @@ type FunctionValue struct {
 }
 
 func (n *FunctionValue) Type() ValueTypes {
-	return BOOLEAN_VALUE
+	return FUNCTION_VALUE
 }
 
 func (n *FunctionValue) String() string {
@@ -167,6 +173,38 @@ func (n *BooleanValue) Type() ValueTypes {
 
 func (n *BooleanValue) String() string {
 	return fmt.Sprintf("%v", n.Value)
+}
+
+type ControlFlowValue struct {
+	FlowType string
+	Value    RuntimeValue
+}
+
+func (c *ControlFlowValue) Type() ValueTypes {
+	return "control_flow"
+}
+
+func (c *ControlFlowValue) String() string {
+	if c.FlowType == FLOW_RETURN && c.Value != nil {
+		return fmt.Sprintf("return [%s]", c.Value.String())
+	}
+	return string(c.FlowType)
+}
+
+func (c *ControlFlowValue) GetFlowType() string {
+	return c.FlowType
+}
+
+func RETURN(value RuntimeValue) *ControlFlowValue {
+	return &ControlFlowValue{FlowType: FLOW_RETURN, Value: value}
+}
+
+func BREAK() *ControlFlowValue {
+	return &ControlFlowValue{FlowType: FLOW_BREAK, Value: NIL()}
+}
+
+func CONTINUE() *ControlFlowValue {
+	return &ControlFlowValue{FlowType: FLOW_CONTINUE, Value: NIL()}
 }
 
 func NIL() *NilValue {

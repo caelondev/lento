@@ -75,7 +75,7 @@ func (i *Interpreter) evaluatePostfixExpression(expr *ast.PostfixExpression, env
 	}
 
 	currentValue := env.LookupVariable(i.line, symbol.Value)
-	
+
 	numValue, ok := currentValue.(*NumberValue)
 	if !ok {
 		i.errorHandler.ReportError(
@@ -494,8 +494,19 @@ func (i *Interpreter) evaluateCallExpression(call *ast.CallExpression, env Envir
 			functionScope.DeclareVariable(i.line, param, args[idx], false, false)
 		}
 
+		wasInFunction := i.isInFunction
+		i.isInFunction = true
+
 		// Execute body with the function scope
-		return i.EvaluateStatement(function.Body, functionScope)
+		result := i.EvaluateStatement(function.Body, functionScope)
+
+		i.isInFunction = wasInFunction
+
+		if control, ok := result.(*ControlFlowValue); ok && control.GetFlowType() == FLOW_RETURN {
+			return control.Value
+		}
+
+		return result
 	}
 
 	i.errorHandler.ReportError(

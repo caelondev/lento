@@ -8,6 +8,10 @@ import (
 type Interpreter struct {
 	errorHandler *errorhandler.ErrorHandler
 	globalEnv    Environment
+
+	isInFunction bool
+	isInLoop     bool
+
 	line         uint
 }
 
